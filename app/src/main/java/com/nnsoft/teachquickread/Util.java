@@ -7,6 +7,11 @@ import java.util.Random;
  */
 
 public class Util {
+    public static int CountWords(char[] text, int pos, int len)
+    {
+        return CountWords(new String(text,pos,len));
+    }
+
     public static int CountWords(String line) {
         String[] words = line.split("[ ,.!?;\\-:\"\t\r\n]+");
         return words.length;

@@ -29,6 +29,7 @@ public class SettingsActivity extends AppCompatActivity {
     private NumberPicker npWordsNumber;
     private NumberPicker npMaxSpeed;
     private CheckBox cbSkipVowels;
+    private CheckBox cbUseHyphen;
     Button btnChooseFile;
     private static final int READ_REQUEST_CODE = 42;
     private static final int FILE_CODE = 43;
@@ -81,6 +82,9 @@ public class SettingsActivity extends AppCompatActivity {
 
         cbSkipVowels = (CheckBox) findViewById(R.id.chSkipVowels);
         cbSkipVowels.setChecked(Options.isSkipVowels());
+
+        cbUseHyphen =(CheckBox) findViewById(R.id.cbUseHyphenation);
+        cbUseHyphen.setChecked(Options.isUseHyphenation());
     }
 
     //Add this method to show Dialog when the required permission has been granted to the app.
@@ -118,6 +122,7 @@ public class SettingsActivity extends AppCompatActivity {
         Options.setWordsNum(npWordsNumber.getValue());
         Options.setMaxSpeed(npMaxSpeed.getValue());
         Options.setSkipVowels(cbSkipVowels.isChecked());
+        Options.setUseHyphenation(cbUseHyphen.isChecked());
         Options.save(this);
     }
 

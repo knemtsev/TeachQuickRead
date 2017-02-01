@@ -29,6 +29,7 @@ public class Options {
     private static boolean skipVowels;
     private static Date lastDateSpeedMode;
     private static int maxSpeed;
+    private static boolean useHyphenation;
 
     private static FB2 fb2;
 
@@ -50,6 +51,7 @@ public class Options {
             p.putBoolean("skipVowels", skipVowels);
             p.putString("lastDateSpeedMode", formatDate(lastDateSpeedMode));
             p.putInt("maxSpeed", maxSpeed);
+            p.putBoolean("useHyphenation", useHyphenation);
             p.commit();
         } catch (Exception ex) {
             Log.e(TAG, ex.toString());
@@ -69,6 +71,7 @@ public class Options {
             SimpleDateFormat parser = new SimpleDateFormat(dateFormat);
             lastDateSpeedMode = parser.parse(pref.getString("lastDateSpeedMode", formatDate(new Date())));
             maxSpeed = pref.getInt("maxSpeed", 300);
+            useHyphenation=pref.getBoolean("useHyphenation",true);
         } catch (Exception ex) {
             Log.e(TAG, ex.toString());
         }
@@ -171,5 +174,13 @@ public class Options {
 
     public static void setMaxSpeed(int maxSpeed) {
         Options.maxSpeed = maxSpeed;
+    }
+
+    public static boolean isUseHyphenation() {
+        return useHyphenation;
+    }
+
+    public static void setUseHyphenation(boolean useHyphenation) {
+        Options.useHyphenation = useHyphenation;
     }
 }

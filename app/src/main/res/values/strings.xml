@@ -1,0 +1,32 @@
+<resources>
+    <string name="app_name">Teach Quick Read</string>
+    <string name="options">Settings</string>
+    <string name="mode">Mode</string>
+    <string name="simple_mode">Simple Mode</string>
+    <string name="SpeedMode">Fixed Speed Mode</string>
+    <string name="voice_mode">Voice Mode</string>
+    <string name="speed_mode">Speed Mode</string>
+    <string name="speed_of_read_in_word_by_minute">Speed of reading (w/m)</string>
+    <string name="title_activity_settings">Settings</string>
+
+    <!-- Strings related to Settings -->
+
+    <string name="choose_file_for_reading">Choose file for reading</string>
+    <string name="click_here_to_choose_file_for_reading">Click here to choose file for reading</string>
+    <string name="start">Start</string>
+    <string name="font_size">Font size</string>
+    <string name="common_settings">Common Settings</string>
+    <string name="speed_read_settings">Speed read settings</string>
+    <string name="voice_read_settings">Voice Read Settings</string>
+    <string name="text_size">Text size (words)</string>
+    <string name="words_number">Size of text in words</string>
+    <string name="records">Records</string>
+    <string name="Date">Date</string>
+    <string name="time">Time (s)</string>
+    <string name="words">Words</string>
+    <string name="speed">Speed (w/m)</string>
+    <string name="it_s_ready">It\'s ready</string>
+    <string name="pro">(Pro)</string>
+    <string name="check_skip_vowels">Skip vowels</string>
+    <string name="max_speed">Max speed (w/m)</string>
+</resources>

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TableRow xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <TextView
+        android:id="@+id/colDate"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:text="Speed"
+        android:background="@color/colorLightGray"
+        android:padding="5dp"
+        android:layout_weight="5"
+        android:layout_margin="1dip" />
+
+    <TextView
+        android:id="@+id/colWords"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:text="Speed"
+        android:background="@color/colorLightGray"
+        android:padding="5dp"
+        android:layout_weight="3"
+        android:layout_margin="1dip"
+        android:gravity="right" />
+
+    <TextView
+        android:id="@+id/colTime"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:text="Speed"
+        android:background="@color/colorLightGray"
+        android:padding="5dp"
+        android:layout_weight="3"
+        android:layout_margin="1dip"
+        android:gravity="right" />
+
+    <TextView
+        android:id="@+id/colSpeed"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:text="Speed"
+        android:background="@color/colorLightGray"
+        android:padding="5dp"
+        android:layout_weight="3"
+        android:layout_margin="1dip"
+        android:gravity="right" />
+
+</TableRow>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Учу Быстро Читать</string>
+    <string name="options">Парметры</string>
+    <string name="mode">Режим</string>
+    <string name="simple_mode">Простой режим</string>
+    <string name="SpeedMode">Режим с заданной скоростью</string>
+    <string name="voice_mode">Режим чтения вслух</string>
+    <string name="speed_mode">Режим с заданной скоростью</string>
+    <string name="speed_of_read_in_word_by_minute">Скорость чтения (с/м)</string>
+    <string name="title_activity_settings">Параметры</string>
+    <string name="choose_file_for_reading">Выберите файл для чтения</string>
+    <string name="click_here_to_choose_file_for_reading">Нажмите, чтобы выбрать файл для чтения</string>
+    <string name="start">Пуск</string>
+    <string name="font_size">Размер шрифта</string>
+    <string name="common_settings">Общие настройки</string>
+    <string name="speed_read_settings">Чтение с заданной скоростью</string>
+    <string name="text_size">Размер текста (в словах)</string>
+    <string name="voice_read_settings">Настройки чтения вслух</string>
+    <string name="words_number">Размер текста в словах</string>
+    <string name="records">Рекорды</string>
+    <string name="Date">Дата</string>
+    <string name="speed">Скорость (с/м)</string>
+    <string name="time">Время (с)</string>
+    <string name="words">Слов</string>
+    <string name="it_s_ready">Готово</string>
+    <string name="pro">(Про)</string>
+    <string name="check_skip_vowels">Пропускать гласные</string>
+    <string name="max_speed">Макc. скорость (с/м)</string>
+</resources>

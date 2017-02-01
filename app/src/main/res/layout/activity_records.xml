@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/activity_records"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    tools:context="com.nnsoft.teachquickread.RecordsActivity">
+
+    <TableLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/tlRecords"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentStart="true">
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:text="@string/Date"
+                android:background="@color/colorHeader"
+                android:padding="5dp"
+                android:layout_weight="5"
+                android:layout_margin="1dip"
+                android:textColor="@color/textColorPrimary" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:text="@string/words"
+                android:background="@color/colorHeader"
+                android:layout_weight="3"
+                android:padding="5dp"
+                android:layout_margin="1dip"
+                android:textColor="@color/textColorPrimary" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:text="@string/time"
+                android:background="@color/colorHeader"
+                android:padding="5dp"
+                android:layout_weight="3"
+                android:layout_margin="1dip"
+                android:textColor="@color/textColorPrimary" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:text="@string/speed"
+                android:background="@color/colorHeader"
+                android:padding="5dp"
+                android:layout_weight="3"
+                android:layout_margin="1dip"
+                android:textColor="@color/textColorPrimary" />
+        </TableRow>
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:id="@+id/svRecords">
+
+            <TableLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:id="@+id/tlRecordsTable"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentStart="true"></TableLayout>
+
+        </ScrollView>
+
+    </TableLayout>
+</RelativeLayout>

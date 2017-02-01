@@ -31,22 +31,13 @@ import java.util.Random;
 import io.realm.Realm;
 
 public class ReadActivity extends AppCompatActivity implements View.OnClickListener {
-    private String TAG = "ReadActivity";
-
-    // TODO: сделать задержку после клика по тексту для предотвращения случайного пролистывания
-
     LinearLayout llMain;
 
+    // TODO: сделать задержку после клика по тексту для предотвращения случайного пролистывания
     // DEBUG
     TextView tvFontSize;
     //    Button btnAdd,btnSub;
     int fontSize;
-    private int activity_horizontal_margin;
-    private int widthPx, heightPx;
-    private int maxLenLine = 100;
-    private char[] textToRead;
-    private int curPos;
-    private Record rec;
     long startTime, stopTime, startTimeOfPage;
     Updater u;
     int shadowLine;
@@ -56,7 +47,6 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
     int wordsOnPage; // количество строк на текущем экране
     int fixedSpeedOfReading; // заданная скорость чтения слов/минуту
     int durationForWordMS;  // время на одно слово в мс
-
     Map<Integer, Integer> linesNumByFont = new HashMap<Integer, Integer>() {{
         put(12, 34);
         put(13, 31);
@@ -89,6 +79,36 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
         put(40, 10);
         put(41, 10);
     }};
+    private String TAG = "ReadActivity";
+    private int activity_horizontal_margin;
+    private int widthPx, heightPx;
+    private int maxLenLine = 100;
+    private char[] textToRead;
+    private int curPos;
+    private Record rec;
+
+    public static int getBackgroundColor(View view) {
+        Drawable drawable = view.getBackground();
+        if (drawable instanceof ColorDrawable) {
+            ColorDrawable colorDrawable = (ColorDrawable) drawable;
+            if (Build.VERSION.SDK_INT >= 11) {
+                return colorDrawable.getColor();
+            }
+            try {
+                Field field = colorDrawable.getClass().getDeclaredField("mState");
+                field.setAccessible(true);
+                Object object = field.get(colorDrawable);
+                field = object.getClass().getDeclaredField("mUseColor");
+                field.setAccessible(true);
+                return field.getInt(object);
+            } catch (NoSuchFieldException e) {
+                e.printStackTrace();
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            }
+        }
+        return 0;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -132,7 +152,6 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
         super.onPause();
         if (u != null) u.stopped = true;
     }
-
 
     void startReading() {
         startTime = System.currentTimeMillis();
@@ -200,7 +219,7 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private boolean isBlank(char c) {
-        return (c == ' ') || (c == '\r') || (c == '\n') || (c == '\t');
+        return (c == ' ') || (c == '\r') || (c == '\n') || (c == '\t') || (c == ' ');
     }
 
     private boolean isEol(char[] text, int pos) {
@@ -251,16 +270,17 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
                 int lenW = endW - begW + 1;
                 if (numVowels > 1) {
                     // делаем 1 пропуск в случайной позиции, кроме первой
-                    int numSkipped = rnd.nextInt(numVowels - 1) + 1;
-                    int iV = 0;
+                    int nV = 0;
                     for (int i = begW; i <= endW; i++) {
                         char c = text[i];
-                        if (isVowel(c)) {
-                            if (numSkipped == iV)
+                        if (isVowel(c) && i>begW) {
+                            if ((nV%2)==0) {
+                                //Log.d(TAG,""+new String(text,begW,lenW)+" c="+c+" posW="+(i-begW));
                                 sb.append('.');
+                            }
                             else
                                 sb.append(c);
-                            iV++;
+                            nV++;
                         } else
                             sb.append(c);
                     }
@@ -348,29 +368,6 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
         return pos;
     }
 
-    public static int getBackgroundColor(View view) {
-        Drawable drawable = view.getBackground();
-        if (drawable instanceof ColorDrawable) {
-            ColorDrawable colorDrawable = (ColorDrawable) drawable;
-            if (Build.VERSION.SDK_INT >= 11) {
-                return colorDrawable.getColor();
-            }
-            try {
-                Field field = colorDrawable.getClass().getDeclaredField("mState");
-                field.setAccessible(true);
-                Object object = field.get(colorDrawable);
-                field = object.getClass().getDeclaredField("mUseColor");
-                field.setAccessible(true);
-                return field.getInt(object);
-            } catch (NoSuchFieldException e) {
-                e.printStackTrace();
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();
-            }
-        }
-        return 0;
-    }
-
     private void crossfade(final View mLoadingView) {
         int duration = numWords[shadowLine] * durationForWordMS;
         Log.d(TAG, "Before fade " + duration + " ms, words[" + shadowLine + "]=" + numWords[shadowLine]);
@@ -384,6 +381,46 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
                     }
                 });
         Log.d(TAG, "After fade " + duration + " ms, words[" + shadowLine + "]=" + numWords[shadowLine]);
+    }
+
+    // DEBUG
+    private void setFontSize(int size) {
+        tvFontSize.setText(Integer.toString(size));
+    }
+
+    private void showTest() {
+        llMain.removeAllViews();
+//        Rect rect=new Rect();
+//        llMain.getDrawingRect(rect);
+        DisplayMetrics dm = getResources().getDisplayMetrics();
+        float dens = dm.density;
+        try {
+            int num_lines = 5;
+            String[] pars = Options.getParagraphs();
+            TextView tv[] = new TextView[num_lines];
+            LayoutParams tvLayoutParam = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
+            TextView tv2 = new TextView(this);
+            tv2.setText("" + dm.density + " " + dm.densityDpi + " " + dm.widthPixels + " " + dm.heightPixels + " " + dm.xdpi + " " + dm.ydpi + " " + dm.scaledDensity +
+                    " " + activity_horizontal_margin);
+            llMain.addView(tv2);
+            for (int i = 0; i < num_lines; i++) {
+                TextView tvi = new TextView(this);
+                tv[i] = new TextView(this);
+                tv[i].setTextSize(fontSize);
+                int w = llMain.getWidth();
+                tv[i].setLayoutParams(tvLayoutParam);
+                tvi.setLayoutParams(tvLayoutParam);
+                float len = tv[i].getPaint().measureText(pars[i]);
+                float[] mesW = new float[1];
+                int chars = tv[i].getPaint().breakText(pars[i], true, w, mesW);
+                tvi.setText("" + len + " " + w + " " + w * dens + " " + chars + " " + mesW[0]);
+                tv[i].setText(pars[i]);
+                llMain.addView(tvi);
+                llMain.addView(tv[i]);
+            }
+        } catch (Exception ex) {
+            Log.e("", ex.toString());
+        }
     }
 
     private class Updater extends Thread {
@@ -435,47 +472,6 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
                 }
             } catch (Exception e) {
             }
-        }
-    }
-
-
-    // DEBUG
-    private void setFontSize(int size) {
-        tvFontSize.setText(Integer.toString(size));
-    }
-
-    private void showTest() {
-        llMain.removeAllViews();
-//        Rect rect=new Rect();
-//        llMain.getDrawingRect(rect);
-        DisplayMetrics dm = getResources().getDisplayMetrics();
-        float dens = dm.density;
-        try {
-            int num_lines = 5;
-            String[] pars = Options.getParagraphs();
-            TextView tv[] = new TextView[num_lines];
-            LayoutParams tvLayoutParam = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
-            TextView tv2 = new TextView(this);
-            tv2.setText("" + dm.density + " " + dm.densityDpi + " " + dm.widthPixels + " " + dm.heightPixels + " " + dm.xdpi + " " + dm.ydpi + " " + dm.scaledDensity +
-                    " " + activity_horizontal_margin);
-            llMain.addView(tv2);
-            for (int i = 0; i < num_lines; i++) {
-                TextView tvi = new TextView(this);
-                tv[i] = new TextView(this);
-                tv[i].setTextSize(fontSize);
-                int w = llMain.getWidth();
-                tv[i].setLayoutParams(tvLayoutParam);
-                tvi.setLayoutParams(tvLayoutParam);
-                float len = tv[i].getPaint().measureText(pars[i]);
-                float[] mesW = new float[1];
-                int chars = tv[i].getPaint().breakText(pars[i], true, w, mesW);
-                tvi.setText("" + len + " " + w + " " + w * dens + " " + chars + " " + mesW[0]);
-                tv[i].setText(pars[i]);
-                llMain.addView(tvi);
-                llMain.addView(tv[i]);
-            }
-        } catch (Exception ex) {
-            Log.e("", ex.toString());
         }
     }
 

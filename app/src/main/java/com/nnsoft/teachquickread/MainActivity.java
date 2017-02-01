@@ -67,7 +67,6 @@ public class MainActivity extends AppCompatActivity {
         npFixedSpeed = (NumberPicker) findViewById(R.id.npFixedSpeed);
 
         btnStart = (Button) findViewById(R.id.btnStart);
-        btnStart.setEnabled(Options.getFileNameToRead().length() > 0);
         btnStart.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -135,6 +134,11 @@ public class MainActivity extends AppCompatActivity {
         npFixedSpeed.setValue(Options.getReadSpeed());
     }
 
+    @Override
+    protected void onResume()
+    {
+        btnStart.setEnabled(Options.getFileNameToRead().length() > 0);
+    }
     @Override
     protected void onDestroy() {
         super.onDestroy();

@@ -3,6 +3,7 @@ package com.nnsoft.teachquickread;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
@@ -99,6 +100,19 @@ public class MainActivity extends AppCompatActivity {
         }
 
         restState();
+
+        try {
+            Hyphenator h = new Hyphenator();
+            Log.d(TAG, h.hyphenateWord("авторемонтник").toString());
+            Log.d(TAG, h.hyphenateWord("переоральный").toString());
+            Log.d(TAG, h.hyphenateWord("интернационализация").toString());
+            Log.d(TAG, h.hyphenateWord("Antidisestablishmentarism").toString());
+        }
+        catch (Exception e)
+        {
+            Log.e(TAG,e.toString());
+        }
+
     }
 
 
@@ -137,6 +151,8 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume()
     {
+        super.onResume();
+
         btnStart.setEnabled(Options.getFileNameToRead().length() > 0);
     }
     @Override

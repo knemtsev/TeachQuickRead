@@ -16,7 +16,7 @@ import java.util.Date;
 
 public class Options {
     private static final String TAG = "Options";
-    private static final String assetFB2File="Волшебник Изумрудного города.fb2.zip";
+    private static final String assetFB2File="vig.fb2";
     private static Options ourInstance = new Options();
 
     // properties

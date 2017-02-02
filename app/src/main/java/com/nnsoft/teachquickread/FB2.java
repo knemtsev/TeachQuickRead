@@ -48,14 +48,11 @@ public class FB2 {
 
     public FB2(InputStream is)
     {
-        ZipInputStream zipIs = new ZipInputStream(is);
         try {
-            ZipEntry ze = (ZipEntry) zipIs.getNextEntry();
-            fileText = readText(zipIs);
-            zipIs.close();
+            fileText = readText(is);
         }catch (Exception ex)
         {
-            ex.printStackTrace();
+//            ex.printStackTrace();
             Log.d(TAG,ex.toString());
         }
     }

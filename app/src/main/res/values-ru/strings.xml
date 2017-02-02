@@ -27,4 +27,5 @@
     <string name="pro">(Про)</string>
     <string name="check_skip_vowels">Пропускать гласные</string>
     <string name="max_speed">Макc. скорость (с/м)</string>
+    <string name="use_hyphenation">Использовать переносы</string>
 </resources>

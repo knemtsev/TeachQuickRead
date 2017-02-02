@@ -27,26 +27,17 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
+import java.util.Vector;
 
 import io.realm.Realm;
 
 public class ReadActivity extends AppCompatActivity implements View.OnClickListener {
-    private String TAG = "ReadActivity";
-
-    // TODO: сделать задержку после клика по тексту для предотвращения случайного пролистывания
-
     LinearLayout llMain;
 
     // DEBUG
     TextView tvFontSize;
     //    Button btnAdd,btnSub;
     int fontSize;
-    private int activity_horizontal_margin;
-    private int widthPx, heightPx;
-    private int maxLenLine = 100;
-    private char[] textToRead;
-    private int curPos;
-    private Record rec;
     long startTime, stopTime, startTimeOfPage;
     Updater u;
     int shadowLine;
@@ -56,7 +47,6 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
     int wordsOnPage; // количество строк на текущем экране
     int fixedSpeedOfReading; // заданная скорость чтения слов/минуту
     int durationForWordMS;  // время на одно слово в мс
-
     Map<Integer, Integer> linesNumByFont = new HashMap<Integer, Integer>() {{
         put(12, 34);
         put(13, 31);
@@ -89,6 +79,36 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
         put(40, 10);
         put(41, 10);
     }};
+    private String TAG = "ReadActivity";
+    private int activity_horizontal_margin;
+    private int widthPx, heightPx;
+    private int maxLenLine = 100;
+    private char[] textToRead;
+    private int curPos;
+    private Record rec;
+
+    public static int getBackgroundColor(View view) {
+        Drawable drawable = view.getBackground();
+        if (drawable instanceof ColorDrawable) {
+            ColorDrawable colorDrawable = (ColorDrawable) drawable;
+            if (Build.VERSION.SDK_INT >= 11) {
+                return colorDrawable.getColor();
+            }
+            try {
+                Field field = colorDrawable.getClass().getDeclaredField("mState");
+                field.setAccessible(true);
+                Object object = field.get(colorDrawable);
+                field = object.getClass().getDeclaredField("mUseColor");
+                field.setAccessible(true);
+                return field.getInt(object);
+            } catch (NoSuchFieldException e) {
+                e.printStackTrace();
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            }
+        }
+        return 0;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -132,7 +152,6 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
         super.onPause();
         if (u != null) u.stopped = true;
     }
-
 
     void startReading() {
         startTime = System.currentTimeMillis();
@@ -200,7 +219,11 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private boolean isBlank(char c) {
-        return (c == ' ') || (c == '\r') || (c == '\n') || (c == '\t');
+        return (c == ' ') || (c == '\r') || (c == '\n') || (c == '\t') || (c == ' ');
+    }
+
+    private boolean isPunct(char c) {
+        return (c == ',') || (c == '.') || (c == ':') || (c == ';') || (c == '-') || (c == '?') || (c == '!') || (c == '"');
     }
 
     private boolean isEol(char[] text, int pos) {
@@ -251,16 +274,17 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
                 int lenW = endW - begW + 1;
                 if (numVowels > 1) {
                     // делаем 1 пропуск в случайной позиции, кроме первой
-                    int numSkipped = rnd.nextInt(numVowels - 1) + 1;
-                    int iV = 0;
+                    int nV = 0;
                     for (int i = begW; i <= endW; i++) {
                         char c = text[i];
-                        if (isVowel(c)) {
-                            if (numSkipped == iV)
+                        if (isVowel(c) && i>begW) {
+                            if ((nV%2)==0) {
+                                //Log.d(TAG,""+new String(text,begW,lenW)+" c="+c+" posW="+(i-begW));
                                 sb.append('.');
+                            }
                             else
                                 sb.append(c);
-                            iV++;
+                            nV++;
                         } else
                             sb.append(c);
                     }
@@ -276,6 +300,72 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
         } else
             res = new String(text, pos, lenLine);
         return res;
+    }
+
+    private int getLenLine(char[] text, int pos, int lenLine, boolean[] addHyphen)
+    {
+        try {
+            boolean isNewLine = false;
+            // поиск перевода на новую строку
+            for (int i = 0; i < lenLine; i++)
+                if (isEol(text, pos + i)) {
+                    lenLine = i;
+                    isNewLine = true;
+                    break;
+                }
+
+            addHyphen[0] = false;
+            if (!isNewLine) {
+                if (lenLine > 0 && isBlank(text[pos + lenLine - 1])) {
+                    // последним символом выводимой строки оказался пробел
+                    lenLine--;
+                    // и больше ничего не делаем, строка полностью вошла
+                } else if (!isEot(text, pos + lenLine) && lenLine > 0 && isBlank(text[pos + lenLine])) {
+                    // за последним символом строки оказался пробел
+                    ;
+                    // тоже ничего не делаем
+                } else {
+                    // конец выводимой строки рвёт слово
+                    if (Options.isUseHyphenation()) {
+                        // пытаемся разбить слово по слогам и вывести с переносом
+                        // находим начало слова и конец слова
+                        int begW = pos + lenLine;
+                        int endW = pos + lenLine;
+                        while (begW > pos && !(isBlank(text[begW - 1]) || isPunct(text[begW - 1])))
+                            begW--;
+                        while (!isEot(text, endW) && !(isBlank(text[begW]) || isPunct(text[begW])))
+                            endW++;
+                        Vector<String> syllables = new Hyphenator().hyphenateWord(new String(text, begW, endW - begW));
+                        int lenLineWW = begW - pos;
+                        int lenFirstHalf = 0;
+                        for (String s : syllables) {
+                            if (lenLineWW + lenFirstHalf + s.length() < lenLine)
+                                lenFirstHalf += s.length();
+                            else
+                                break;
+                        }
+                        addHyphen[0] = lenFirstHalf > 0;
+                        if (lenLineWW + lenFirstHalf > 0)
+                            lenLine = lenLineWW + lenFirstHalf;
+                    } else {
+                        // рвём по пробелу или, если слово слишком длинное и занимает всю строку, рвём слово
+                        // поиск пробела от конца строки
+                        for (int i = lenLine - 1; i > 0; i--) {
+                            if (isBlank(text[pos + i])) {
+                                lenLine = i;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        catch(Exception ex)
+        {
+            Log.e(TAG,ex.getStackTrace().toString());
+        }
+
+        return lenLine;
     }
 
     private int showText(char[] text, int pos) {
@@ -298,27 +388,17 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
 
             Paint p = vt.getPaint();
             int lenLine = p.breakText(text, pos, Math.min(text.length - pos, maxLenLine), widthPx, null);
-            boolean isNewLine = false;
-            // поиск перевода на новую строку
-            for (int i = 0; i < lenLine; i++)
-                if (isEol(text, pos + i)) {
-                    lenLine = i;
-                    isNewLine = true;
-                    break;
-                }
 
-            // поиск пробела от конца строки
-            if (!isNewLine && !isEot(text, pos + lenLine) && !isBlank(text[pos + lenLine]))
-                for (int i = lenLine - 1; i > 0; i--) {
-                    if (isBlank(text[pos + i])) {
-                        lenLine = i;
-                        break;
-                    }
-                }
-            vt.setText(skipVowels(text, pos, lenLine));
+            boolean[] addHyphen=new boolean[1];
+            lenLine=getLenLine(text, pos, lenLine, addHyphen);
+
+            String outText=skipVowels(text, pos, lenLine);
+
+            numWords[numLine] = Util.CountWords(text, pos, lenLine);
+
+            vt.setText(""+outText+(addHyphen[0]?"-":""));
             llMain.addView(vt);
 
-            numWords[numLine] = Util.CountWords(new String(text, pos, lenLine));
             wordsOnPage += numWords[numLine];
 
             pos = skipBlank(text, pos + lenLine);
@@ -348,29 +428,6 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
         return pos;
     }
 
-    public static int getBackgroundColor(View view) {
-        Drawable drawable = view.getBackground();
-        if (drawable instanceof ColorDrawable) {
-            ColorDrawable colorDrawable = (ColorDrawable) drawable;
-            if (Build.VERSION.SDK_INT >= 11) {
-                return colorDrawable.getColor();
-            }
-            try {
-                Field field = colorDrawable.getClass().getDeclaredField("mState");
-                field.setAccessible(true);
-                Object object = field.get(colorDrawable);
-                field = object.getClass().getDeclaredField("mUseColor");
-                field.setAccessible(true);
-                return field.getInt(object);
-            } catch (NoSuchFieldException e) {
-                e.printStackTrace();
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();
-            }
-        }
-        return 0;
-    }
-
     private void crossfade(final View mLoadingView) {
         int duration = numWords[shadowLine] * durationForWordMS;
         Log.d(TAG, "Before fade " + duration + " ms, words[" + shadowLine + "]=" + numWords[shadowLine]);
@@ -384,6 +441,46 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
                     }
                 });
         Log.d(TAG, "After fade " + duration + " ms, words[" + shadowLine + "]=" + numWords[shadowLine]);
+    }
+
+    // DEBUG
+    private void setFontSize(int size) {
+        tvFontSize.setText(Integer.toString(size));
+    }
+
+    private void showTest() {
+        llMain.removeAllViews();
+//        Rect rect=new Rect();
+//        llMain.getDrawingRect(rect);
+        DisplayMetrics dm = getResources().getDisplayMetrics();
+        float dens = dm.density;
+        try {
+            int num_lines = 5;
+            String[] pars = Options.getParagraphs();
+            TextView tv[] = new TextView[num_lines];
+            LayoutParams tvLayoutParam = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
+            TextView tv2 = new TextView(this);
+            tv2.setText("" + dm.density + " " + dm.densityDpi + " " + dm.widthPixels + " " + dm.heightPixels + " " + dm.xdpi + " " + dm.ydpi + " " + dm.scaledDensity +
+                    " " + activity_horizontal_margin);
+            llMain.addView(tv2);
+            for (int i = 0; i < num_lines; i++) {
+                TextView tvi = new TextView(this);
+                tv[i] = new TextView(this);
+                tv[i].setTextSize(fontSize);
+                int w = llMain.getWidth();
+                tv[i].setLayoutParams(tvLayoutParam);
+                tvi.setLayoutParams(tvLayoutParam);
+                float len = tv[i].getPaint().measureText(pars[i]);
+                float[] mesW = new float[1];
+                int chars = tv[i].getPaint().breakText(pars[i], true, w, mesW);
+                tvi.setText("" + len + " " + w + " " + w * dens + " " + chars + " " + mesW[0]);
+                tv[i].setText(pars[i]);
+                llMain.addView(tvi);
+                llMain.addView(tv[i]);
+            }
+        } catch (Exception ex) {
+            Log.e("", ex.toString());
+        }
     }
 
     private class Updater extends Thread {
@@ -435,47 +532,6 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
                 }
             } catch (Exception e) {
             }
-        }
-    }
-
-
-    // DEBUG
-    private void setFontSize(int size) {
-        tvFontSize.setText(Integer.toString(size));
-    }
-
-    private void showTest() {
-        llMain.removeAllViews();
-//        Rect rect=new Rect();
-//        llMain.getDrawingRect(rect);
-        DisplayMetrics dm = getResources().getDisplayMetrics();
-        float dens = dm.density;
-        try {
-            int num_lines = 5;
-            String[] pars = Options.getParagraphs();
-            TextView tv[] = new TextView[num_lines];
-            LayoutParams tvLayoutParam = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
-            TextView tv2 = new TextView(this);
-            tv2.setText("" + dm.density + " " + dm.densityDpi + " " + dm.widthPixels + " " + dm.heightPixels + " " + dm.xdpi + " " + dm.ydpi + " " + dm.scaledDensity +
-                    " " + activity_horizontal_margin);
-            llMain.addView(tv2);
-            for (int i = 0; i < num_lines; i++) {
-                TextView tvi = new TextView(this);
-                tv[i] = new TextView(this);
-                tv[i].setTextSize(fontSize);
-                int w = llMain.getWidth();
-                tv[i].setLayoutParams(tvLayoutParam);
-                tvi.setLayoutParams(tvLayoutParam);
-                float len = tv[i].getPaint().measureText(pars[i]);
-                float[] mesW = new float[1];
-                int chars = tv[i].getPaint().breakText(pars[i], true, w, mesW);
-                tvi.setText("" + len + " " + w + " " + w * dens + " " + chars + " " + mesW[0]);
-                tv[i].setText(pars[i]);
-                llMain.addView(tvi);
-                llMain.addView(tv[i]);
-            }
-        } catch (Exception ex) {
-            Log.e("", ex.toString());
         }
     }
 

@@ -147,6 +147,14 @@
                 android:text="@string/check_skip_vowels"
                 android:textSize="@dimen/label_font_size" />
 
+            <CheckBox
+                android:id="@+id/cbUseHyphenation"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/text_margin"
+                android:text="@string/use_hyphenation"
+                android:textSize="@dimen/label_font_size" />
+
             <TextView
                 android:layout_marginTop="@dimen/text_margin"
                 android:layout_width="match_parent"

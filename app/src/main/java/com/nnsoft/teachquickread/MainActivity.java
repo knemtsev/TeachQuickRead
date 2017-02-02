@@ -37,6 +37,7 @@ public class MainActivity extends AppCompatActivity {
 
         Realm.init(this);
         Options.rest(this);
+        Options.asyncSetParagraphs(this);
 
         btnSettings = (Button) findViewById(R.id.btnOptions);
         btnSettings.setOnClickListener(new View.OnClickListener() {
@@ -99,6 +100,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         restState();
+
     }
 
 
@@ -137,7 +139,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume()
     {
-        btnStart.setEnabled(Options.getFileNameToRead().length() > 0);
+        super.onResume();
+
+        btnStart.setEnabled(Options.getParagraphs()!=null);
     }
     @Override
     protected void onDestroy() {

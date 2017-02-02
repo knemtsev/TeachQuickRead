@@ -4,18 +4,25 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.LinearLayout;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
 
-public class RecordActivity extends AppCompatActivity {
+public class RecordActivity extends AppCompatActivity implements View.OnClickListener {
 
     TableLayout tl;
+    LinearLayout llMain;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_record);
+
+        llMain=(LinearLayout)findViewById(R.id.activity_record);
+        llMain.setOnClickListener(this);
+
         Intent intent = getIntent();
         String date = intent.getStringExtra("date");
         int words = intent.getIntExtra("words", -1);
@@ -62,5 +69,10 @@ public class RecordActivity extends AppCompatActivity {
 
         tl.addView(tr);
 
+    }
+
+    @Override
+    public void onClick(View v) {
+        super.finish();
     }
 }

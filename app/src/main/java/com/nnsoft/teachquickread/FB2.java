@@ -12,6 +12,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+import java.util.zip.ZipInputStream;
 
 /**
  * Created by knemt on 24.01.2017.
@@ -27,7 +28,6 @@ public class FB2 {
 
         filePath = _filePath;
         try {
-
             File f = new File(filePath);
 //            Log.i("FB2",filePath);
             if (f.exists()) {
@@ -36,14 +36,28 @@ public class FB2 {
                     ZipFile zf = new ZipFile(filePath);
                     ZipEntry ze = (ZipEntry) zf.entries().nextElement();
                     fileText = readText(zf.getInputStream(ze));
+                    zf.close();
                 } else {
                     fileText = readText(new FileInputStream(filePath));
                 }
             }
         } catch (Exception ex) {
-
+            Log.d(TAG,ex.toString());
         }
+    }
 
+    public FB2(InputStream is)
+    {
+        ZipInputStream zipIs = new ZipInputStream(is);
+        try {
+            ZipEntry ze = (ZipEntry) zipIs.getNextEntry();
+            fileText = readText(zipIs);
+            zipIs.close();
+        }catch (Exception ex)
+        {
+            ex.printStackTrace();
+            Log.d(TAG,ex.toString());
+        }
     }
 
     private String readText(InputStream is) {

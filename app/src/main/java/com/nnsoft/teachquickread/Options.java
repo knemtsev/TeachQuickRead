@@ -3,6 +3,7 @@ package com.nnsoft.teachquickread;
 import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.res.AssetManager;
 import android.util.Log;
 
 import java.text.DateFormat;
@@ -15,6 +16,7 @@ import java.util.Date;
 
 public class Options {
     private static final String TAG = "Options";
+    private static final String assetFB2File="Волшебник Изумрудного города.fb2.zip";
     private static Options ourInstance = new Options();
 
     // properties
@@ -83,11 +85,10 @@ public class Options {
     }
 
     public static void setFileNameToRead(String _fileNameToRead) {
-
-        if (_fileNameToRead.length() > 0 && (paragraphs == null || !_fileNameToRead.equalsIgnoreCase(fileNameToRead))) {
-            fb2 = new FB2(_fileNameToRead);
-            paragraphs = fb2.GetParagraphs();
-        }
+//        if (_fileNameToRead.length() > 0 && (paragraphs == null || !_fileNameToRead.equalsIgnoreCase(fileNameToRead))) {
+//            fb2 = new FB2(_fileNameToRead);
+//            paragraphs = fb2.GetParagraphs();
+//        }
         fileNameToRead = _fileNameToRead;
     }
 
@@ -104,7 +105,31 @@ public class Options {
         Options.readSpeed = readSpeed;
     }
 
+    public static void asyncSetParagraphs(Activity act)
+    {
+        paragraphs=null;
+        if(fileNameToRead.length()>0) {
+            try {
+                fb2 = new FB2(fileNameToRead);
+                paragraphs = fb2.GetParagraphs();
+            } catch (Exception ex) {
+                Log.d(TAG,ex.toString());
+            }
+        }
+        if(paragraphs==null)
+        {
+            try {
+                AssetManager assetManager = act.getAssets();
+                fb2=new FB2(assetManager.open(assetFB2File));
+                paragraphs = fb2.GetParagraphs();
+            } catch (Exception ex) {
+                Log.d(TAG,ex.toString());
+            }
+        }
+    }
+
     public static String[] getParagraphs() {
+
         return paragraphs;
     }
 

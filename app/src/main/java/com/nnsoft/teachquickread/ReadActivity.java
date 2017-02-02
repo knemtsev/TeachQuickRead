@@ -34,7 +34,6 @@ import io.realm.Realm;
 public class ReadActivity extends AppCompatActivity implements View.OnClickListener {
     LinearLayout llMain;
 
-    // TODO: сделать задержку после клика по тексту для предотвращения случайного пролистывания
     // DEBUG
     TextView tvFontSize;
     //    Button btnAdd,btnSub;
@@ -303,6 +302,72 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
         return res;
     }
 
+    private int getLenLine(char[] text, int pos, int lenLine, boolean[] addHyphen)
+    {
+        try {
+            boolean isNewLine = false;
+            // поиск перевода на новую строку
+            for (int i = 0; i < lenLine; i++)
+                if (isEol(text, pos + i)) {
+                    lenLine = i;
+                    isNewLine = true;
+                    break;
+                }
+
+            addHyphen[0] = false;
+            if (!isNewLine) {
+                if (lenLine > 0 && isBlank(text[pos + lenLine - 1])) {
+                    // последним символом выводимой строки оказался пробел
+                    lenLine--;
+                    // и больше ничего не делаем, строка полностью вошла
+                } else if (!isEot(text, pos + lenLine) && lenLine > 0 && isBlank(text[pos + lenLine])) {
+                    // за последним символом строки оказался пробел
+                    ;
+                    // тоже ничего не делаем
+                } else {
+                    // конец выводимой строки рвёт слово
+                    if (Options.isUseHyphenation()) {
+                        // пытаемся разбить слово по слогам и вывести с переносом
+                        // находим начало слова и конец слова
+                        int begW = pos + lenLine;
+                        int endW = pos + lenLine;
+                        while (begW > pos && !(isBlank(text[begW - 1]) || isPunct(text[begW - 1])))
+                            begW--;
+                        while (!isEot(text, endW) && !(isBlank(text[begW]) || isPunct(text[begW])))
+                            endW++;
+                        Vector<String> syllables = new Hyphenator().hyphenateWord(new String(text, begW, endW - begW));
+                        int lenLineWW = begW - pos;
+                        int lenFirstHalf = 0;
+                        for (String s : syllables) {
+                            if (lenLineWW + lenFirstHalf + s.length() < lenLine)
+                                lenFirstHalf += s.length();
+                            else
+                                break;
+                        }
+                        addHyphen[0] = lenFirstHalf > 0;
+                        if (lenLineWW + lenFirstHalf > 0)
+                            lenLine = lenLineWW + lenFirstHalf;
+                    } else {
+                        // рвём по пробелу или, если слово слишком длинное и занимает всю строку, рвём слово
+                        // поиск пробела от конца строки
+                        for (int i = lenLine - 1; i > 0; i--) {
+                            if (isBlank(text[pos + i])) {
+                                lenLine = i;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        catch(Exception ex)
+        {
+            Log.e(TAG,ex.getStackTrace().toString());
+        }
+
+        return lenLine;
+    }
+
     private int showText(char[] text, int pos) {
         // вывести на экран по строке текст с указанной позиции сколько влезет
         // возвращает позицию
@@ -323,65 +388,15 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
 
             Paint p = vt.getPaint();
             int lenLine = p.breakText(text, pos, Math.min(text.length - pos, maxLenLine), widthPx, null);
-            boolean isNewLine = false;
-            // поиск перевода на новую строку
-            for (int i = 0; i < lenLine; i++)
-                if (isEol(text, pos + i)) {
-                    lenLine = i;
-                    isNewLine = true;
-                    break;
-                }
 
-            boolean addHyphen=false;
-            if(!isNewLine) {
-                if (lenLine > 0 && isBlank(text[pos + lenLine - 1])) {
-                    // последним символом выводимой строки оказался пробел
-                    lenLine--;
-                    // и больше ничего не делаем, строка полностью вошла
-                } else if (lenLine > 0 && isBlank(text[pos + lenLine])) {
-                    // за последним символом строки оказался пробел
-                    ;
-                    // тоже ничего не делаем
-                } else {
-                    // конец выводимой строки рвёт слово
-                    if (Options.isUseHyphenation()) {
-                        // пытаемся разбить слово по слогам и вывести с переносом
-                        // находим начало слова и конец слова
-                        int begW=pos+lenLine;
-                        int endW=pos+lenLine;
-                        while(begW>pos && !isBlank(text[begW-1]) && !isPunct(text[begW-1])) begW--;
-                        while(!isEot(text, endW) && !isBlank(text[begW+1]) && !isPunct(text[begW+1])) endW++;
-                        Vector<String> syllables=new Hyphenator().hyphenateWord(new String(text,begW,endW-begW+1));
-                        int lenLineWW=begW-pos;
-                        int lenFirstHalf=0;
-                        for(String s : syllables)
-                        {
-                            if(lenLineWW+lenFirstHalf+s.length()+1<lenLine)
-                                lenFirstHalf+=s.length();
-                            else
-                                break;
-                        }
-                        lenLine=lenLineWW+lenFirstHalf;
-                        addHyphen=lenFirstHalf>0;
-                    } else {
-                        // рвём по пробелу или, если слово слишком длинное и занимает всю строку, рвём слово
-                        // поиск пробела от конца строки
-                        for (int i = lenLine - 1; i > 0; i--) {
-                            if (isBlank(text[pos + i])) {
-                                lenLine = i;
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-
+            boolean[] addHyphen=new boolean[1];
+            lenLine=getLenLine(text, pos, lenLine, addHyphen);
 
             String outText=skipVowels(text, pos, lenLine);
 
             numWords[numLine] = Util.CountWords(text, pos, lenLine);
 
-            vt.setText(""+outText+(addHyphen?"-":""));
+            vt.setText(""+outText+(addHyphen[0]?"-":""));
             llMain.addView(vt);
 
             wordsOnPage += numWords[numLine];

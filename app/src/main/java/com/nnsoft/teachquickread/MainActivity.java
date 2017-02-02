@@ -37,6 +37,7 @@ public class MainActivity extends AppCompatActivity {
 
         Realm.init(this);
         Options.rest(this);
+        Options.asyncSetParagraphs(this);
 
         btnSettings = (Button) findViewById(R.id.btnOptions);
         btnSettings.setOnClickListener(new View.OnClickListener() {
@@ -100,18 +101,6 @@ public class MainActivity extends AppCompatActivity {
 
         restState();
 
-//        try {
-//            Hyphenator h = new Hyphenator();
-//            Log.d(TAG, h.hyphenateWord("авторемонтник").toString());
-//            Log.d(TAG, h.hyphenateWord("переоральный").toString());
-//            Log.d(TAG, h.hyphenateWord("интернационализация").toString());
-//            Log.d(TAG, h.hyphenateWord("Antidisestablishmentarism").toString());
-//        }
-//        catch (Exception e)
-//        {
-//            Log.e(TAG,e.toString());
-//        }
-
     }
 
 
@@ -152,7 +141,7 @@ public class MainActivity extends AppCompatActivity {
     {
         super.onResume();
 
-        btnStart.setEnabled(Options.getFileNameToRead().length() > 0);
+        btnStart.setEnabled(Options.getParagraphs()!=null);
     }
     @Override
     protected void onDestroy() {

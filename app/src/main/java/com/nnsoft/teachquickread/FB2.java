@@ -12,7 +12,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-import java.util.zip.ZipInputStream;
 
 /**
  * Created by knemt on 24.01.2017.
@@ -86,6 +85,7 @@ public class FB2 {
         //Match match0 = Regex.Match(fileText, @".*<body>(.*)</body>",RegexOptions.IgnoreCase);
         int skip = fileText.indexOf("<body>");
         Pattern p = Pattern.compile("<p>(.*)</p>", Pattern.CASE_INSENSITIVE);
+        Pattern pRemLink= Pattern.compile("<a.*</a>", Pattern.CASE_INSENSITIVE);
         Matcher m = p.matcher(fileText.substring(skip));
 
         int pars = 0;

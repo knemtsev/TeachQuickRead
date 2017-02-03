@@ -11,7 +11,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
-import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.github.angads25.filepicker.controller.DialogSelectionListener;
@@ -24,7 +24,7 @@ import java.io.File;
 
 public class SettingsActivity extends AppCompatActivity {
 
-    private EditText edFileToRead;
+    private TextView edFileToRead;
     private NumberPicker npFontSize;
     private NumberPicker npWordsNumber;
     private NumberPicker npMaxSpeed;
@@ -41,7 +41,7 @@ public class SettingsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
 
-        edFileToRead = (EditText) findViewById(R.id.edChooseFileToRead);
+        edFileToRead = (TextView) findViewById(R.id.edChooseFileToRead);
         edFileToRead.setText(Options.getFileNameToRead());
 
         btnChooseFile = (Button) findViewById(R.id.btnChooseFile);
@@ -64,6 +64,7 @@ public class SettingsActivity extends AppCompatActivity {
                         //files is the array of the paths of files selected by the Application User.
                         //Log.i(TAG,files[0]);
                         edFileToRead.setText(files[0]);
+                        Options.setFileLoaded(false);
                     }
                 });
                 dialog.show();

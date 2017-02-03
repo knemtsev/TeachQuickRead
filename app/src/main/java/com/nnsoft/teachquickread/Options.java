@@ -32,6 +32,9 @@ public class Options {
     private static Date lastDateSpeedMode;
     private static int maxSpeed;
     private static boolean useHyphenation;
+    private static boolean fileLoaded;
+    private static boolean randomText;  // случайный фрагмент
+    private static int endOfLastText;
 
     private static FB2 fb2;
 
@@ -74,6 +77,7 @@ public class Options {
             lastDateSpeedMode = parser.parse(pref.getString("lastDateSpeedMode", formatDate(new Date())));
             maxSpeed = pref.getInt("maxSpeed", 300);
             useHyphenation=pref.getBoolean("useHyphenation",true);
+            fileLoaded=false;
         } catch (Exception ex) {
             Log.e(TAG, ex.toString());
         }
@@ -126,6 +130,7 @@ public class Options {
                 Log.d(TAG,ex.toString());
             }
         }
+        setFileLoaded(paragraphs!=null);
     }
 
     public static String[] getParagraphs() {
@@ -207,5 +212,13 @@ public class Options {
 
     public static void setUseHyphenation(boolean useHyphenation) {
         Options.useHyphenation = useHyphenation;
+    }
+
+    public static boolean isFileLoaded() {
+        return fileLoaded;
+    }
+
+    public static void setFileLoaded(boolean fileLoaded) {
+        Options.fileLoaded = fileLoaded;
     }
 }

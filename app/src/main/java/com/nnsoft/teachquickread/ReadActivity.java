@@ -9,6 +9,7 @@ import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
+import android.speech.tts.TextToSpeech;
 import android.support.v7.app.AppCompatActivity;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -25,13 +26,15 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
 import java.util.Vector;
 
 import io.realm.Realm;
 
-public class ReadActivity extends AppCompatActivity implements View.OnClickListener {
+public class ReadActivity extends AppCompatActivity implements View.OnClickListener,
+        TextToSpeech.OnInitListener {
     LinearLayout llMain;
 
     // DEBUG
@@ -86,29 +89,7 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
     private char[] textToRead;
     private int curPos;
     private Record rec;
-
-    public static int getBackgroundColor(View view) {
-        Drawable drawable = view.getBackground();
-        if (drawable instanceof ColorDrawable) {
-            ColorDrawable colorDrawable = (ColorDrawable) drawable;
-            if (Build.VERSION.SDK_INT >= 11) {
-                return colorDrawable.getColor();
-            }
-            try {
-                Field field = colorDrawable.getClass().getDeclaredField("mState");
-                field.setAccessible(true);
-                Object object = field.get(colorDrawable);
-                field = object.getClass().getDeclaredField("mUseColor");
-                field.setAccessible(true);
-                return field.getInt(object);
-            } catch (NoSuchFieldException e) {
-                e.printStackTrace();
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();
-            }
-        }
-        return 0;
-    }
+    private TextToSpeech mTTS;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -130,8 +111,16 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
         textToRead = Options.getTextToRead();
 
         llMain.setOnClickListener(this);
+        TextView tv=new TextView(this);
+        tv.setTextSize(fontSize);
+        //tv.setText("THIS IS A LARGE TEXT");
+        float heightOfLine=tv.getPaint().getFontMetrics().bottom - tv.getPaint().getFontMetrics().top;
 
-        maxNumLines = linesNumByFont.get(Integer.valueOf(fontSize));
+        Log.d(TAG,"heightOfLine="+heightOfLine+" heightPx="+heightPx+" lines="+heightPx/heightOfLine);
+
+        //maxNumLines = linesNumByFont.get(Integer.valueOf(fontSize));
+        maxNumLines = (int)(heightPx/heightOfLine);
+
         Log.d(TAG, "fontSize=" + fontSize + " maxNumLines=" + maxNumLines + " widthPx=" + widthPx + " heightPx=" + heightPx);
         DisplayMetrics dm = getResources().getDisplayMetrics();
         Log.d(TAG, "" + dm.density + " " + dm.densityDpi + " " + dm.widthPixels + " " + dm.heightPixels + " " + dm.xdpi + " " + dm.ydpi + " " + dm.scaledDensity);
@@ -139,10 +128,18 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
         fixedSpeedOfReading = Options.getReadSpeed();
         durationForWordMS = (int) (60 * 1000 / fixedSpeedOfReading);
         Log.d(TAG, "fixedSpeedOfReading=" + fixedSpeedOfReading + "w/m durationForWordMS=" + durationForWordMS + "ms");
+
+        mTTS = new TextToSpeech(this, this);
     }
 
     @Override
     protected void onDestroy() {
+        if(mTTS != null) {
+
+            mTTS.stop();
+            mTTS.shutdown();
+            Log.d(TAG, "TTS Destroyed");
+        }
         super.onDestroy();
         if (u != null) u.stopped = true;
     }
@@ -216,6 +213,50 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
         super.onResume();
         curPos = showText(textToRead, 0);
         startReading();
+    }
+
+    @Override
+    public void onInit(int status) {
+        if (status == TextToSpeech.SUCCESS) {
+
+            Locale locale = new Locale("ru");
+
+            int result = mTTS.setLanguage(locale);
+            //int result = mTTS.setLanguage(Locale.getDefault());
+
+            if (result == TextToSpeech.LANG_MISSING_DATA
+                    || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                Log.e("TTS", "Извините, этот язык не поддерживается");
+            } else {
+                ;//mButton.setEnabled(true);
+            }
+
+        } else {
+            Log.e("TTS", "Ошибка!");
+        }
+    }
+
+    public static int getBackgroundColor(View view) {
+        Drawable drawable = view.getBackground();
+        if (drawable instanceof ColorDrawable) {
+            ColorDrawable colorDrawable = (ColorDrawable) drawable;
+            if (Build.VERSION.SDK_INT >= 11) {
+                return colorDrawable.getColor();
+            }
+            try {
+                Field field = colorDrawable.getClass().getDeclaredField("mState");
+                field.setAccessible(true);
+                Object object = field.get(colorDrawable);
+                field = object.getClass().getDeclaredField("mUseColor");
+                field.setAccessible(true);
+                return field.getInt(object);
+            } catch (NoSuchFieldException e) {
+                e.printStackTrace();
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            }
+        }
+        return 0;
     }
 
     private boolean isBlank(char c) {
@@ -429,6 +470,8 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void crossfade(final View mLoadingView) {
+        String text=((TextView)mLoadingView).getText().toString();
+        mTTS.speak(text, TextToSpeech.QUEUE_FLUSH, null);
         int duration = numWords[shadowLine] * durationForWordMS;
         Log.d(TAG, "Before fade " + duration + " ms, words[" + shadowLine + "]=" + numWords[shadowLine]);
         mLoadingView.animate()

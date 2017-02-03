@@ -2,7 +2,9 @@ package com.nnsoft.teachquickread;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
@@ -29,6 +31,8 @@ public class MainActivity extends AppCompatActivity {
     //private GoogleApiClient client;
     private Button btnRecords;
 
+    private FileLoader fl;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -37,7 +41,7 @@ public class MainActivity extends AppCompatActivity {
 
         Realm.init(this);
         Options.rest(this);
-        Options.asyncSetParagraphs(this);
+        //Options.asyncSetParagraphs(this);
 
         btnSettings = (Button) findViewById(R.id.btnOptions);
         btnSettings.setOnClickListener(new View.OnClickListener() {
@@ -100,7 +104,6 @@ public class MainActivity extends AppCompatActivity {
         }
 
         restState();
-
     }
 
 
@@ -136,12 +139,29 @@ public class MainActivity extends AppCompatActivity {
         npFixedSpeed.setValue(Options.getReadSpeed());
     }
 
+    private void setStateOfStartButton()
+    {
+        if(Options.isFileLoaded()) {
+            btnStart.setBackgroundColor(ContextCompat.getColor(this,R.color.colorHeader));
+            btnStart.setText(getString(R.string.start));
+        }
+        else
+        {
+            btnStart.setBackgroundColor(ContextCompat.getColor(this,R.color.colorAccent));
+            btnStart.setText(getString(R.string.wait_file));
+        }
+        btnStart.setEnabled(Options.isFileLoaded());
+    }
+
     @Override
     protected void onResume()
     {
         super.onResume();
-
-        btnStart.setEnabled(Options.getParagraphs()!=null);
+        setStateOfStartButton();
+        if(!Options.isFileLoaded()) {
+            fl = new FileLoader();
+            fl.start();
+        }
     }
     @Override
     protected void onDestroy() {
@@ -156,4 +176,33 @@ public class MainActivity extends AppCompatActivity {
         saveState();
         Options.save(this);
     }
+
+    private class FileLoader extends Thread {
+        public boolean stopped = false;
+        private long id = this.getId();
+
+        public void run() {
+
+//            try {
+//                Thread.sleep(1000);
+//            }catch (Exception e)
+//            {
+//                Log.d(TAG,e.toString());
+//            }
+            Options.asyncSetParagraphs(MainActivity.this);
+            try {
+                MainActivity.this.runOnUiThread(
+                        new Runnable() {
+                            @Override
+                            public void run() {
+                                setStateOfStartButton();
+                            }
+                        }
+                );
+            } catch (Exception e) {
+                Log.d(TAG,e.toString());
+            }
+        }
+    }
+
 }

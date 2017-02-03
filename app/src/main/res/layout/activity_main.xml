@@ -96,9 +96,9 @@
                 android:id="@+id/btnStart"
                 android:text="@string/start"
                 android:textSize="36dp"
-                android:textColor="@color/colorAccent"
+                android:textColor="@color/colorLightGray"
                 android:background="@color/colorPrimary"
-                android:shadowColor="@color/colorLightGray"
+                android:maxLines="1"
                 android:layout_margin="@dimen/button_margin" />
 
             <Button

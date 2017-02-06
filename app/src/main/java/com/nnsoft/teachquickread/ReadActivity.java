@@ -90,6 +90,8 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
     private int curPos;
     private Record rec;
     private TextToSpeech mTTS;
+    private String textTS;
+    private boolean TTSinited;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -130,6 +132,7 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
         Log.d(TAG, "fixedSpeedOfReading=" + fixedSpeedOfReading + "w/m durationForWordMS=" + durationForWordMS + "ms");
 
         mTTS = new TextToSpeech(this, this);
+
     }
 
     @Override
@@ -211,12 +214,32 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onResume() {
         super.onResume();
+
+        TTSinited=false;
+        if (Options.getMode() == 2) {
+            mTTS.speak("Поехали", TextToSpeech.QUEUE_FLUSH, null);
+            TextView tv=new TextView(this);
+            tv.setText("ждём игициализации Text To Speech");
+            llMain.addView(tv);
+            for(int i=0; i<100 && !TTSinited; i++)
+            {
+                try {
+                    Thread.sleep(100);
+                } catch (Exception ex)
+                {
+
+                }
+            }
+            llMain.removeView(tv);
+        }
+
         curPos = showText(textToRead, 0);
         startReading();
     }
 
     @Override
     public void onInit(int status) {
+        Log.d(TAG,"init start");
         if (status == TextToSpeech.SUCCESS) {
 
             Locale locale = new Locale("ru");
@@ -234,6 +257,8 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
         } else {
             Log.e("TTS", "Ошибка!");
         }
+        Log.d(TAG,"init end");
+        TTSinited=true;
     }
 
     public static int getBackgroundColor(View view) {
@@ -413,6 +438,7 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
         // вывести на экран по строке текст с указанной позиции сколько влезет
         // возвращает позицию
 
+        int posBegPage=pos;
         llMain.removeAllViews();
 
         pos = skipBlank(text, pos);
@@ -448,6 +474,11 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
                 break;
         }
 
+        textTS=new String(text,posBegPage,pos-posBegPage);
+        Log.d(TAG,"before speak");
+        mTTS.speak(textTS, TextToSpeech.QUEUE_FLUSH, null);
+        Log.d(TAG,"after speak");
+
         numLines = numLine;
         if (isEot(text, pos) && numLine != maxNumLines) {
             Button btn = new Button(this);
@@ -470,8 +501,6 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void crossfade(final View mLoadingView) {
-        String text=((TextView)mLoadingView).getText().toString();
-        mTTS.speak(text, TextToSpeech.QUEUE_FLUSH, null);
         int duration = numWords[shadowLine] * durationForWordMS;
         Log.d(TAG, "Before fade " + duration + " ms, words[" + shadowLine + "]=" + numWords[shadowLine]);
         mLoadingView.animate()
@@ -484,46 +513,6 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
                     }
                 });
         Log.d(TAG, "After fade " + duration + " ms, words[" + shadowLine + "]=" + numWords[shadowLine]);
-    }
-
-    // DEBUG
-    private void setFontSize(int size) {
-        tvFontSize.setText(Integer.toString(size));
-    }
-
-    private void showTest() {
-        llMain.removeAllViews();
-//        Rect rect=new Rect();
-//        llMain.getDrawingRect(rect);
-        DisplayMetrics dm = getResources().getDisplayMetrics();
-        float dens = dm.density;
-        try {
-            int num_lines = 5;
-            String[] pars = Options.getParagraphs();
-            TextView tv[] = new TextView[num_lines];
-            LayoutParams tvLayoutParam = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
-            TextView tv2 = new TextView(this);
-            tv2.setText("" + dm.density + " " + dm.densityDpi + " " + dm.widthPixels + " " + dm.heightPixels + " " + dm.xdpi + " " + dm.ydpi + " " + dm.scaledDensity +
-                    " " + activity_horizontal_margin);
-            llMain.addView(tv2);
-            for (int i = 0; i < num_lines; i++) {
-                TextView tvi = new TextView(this);
-                tv[i] = new TextView(this);
-                tv[i].setTextSize(fontSize);
-                int w = llMain.getWidth();
-                tv[i].setLayoutParams(tvLayoutParam);
-                tvi.setLayoutParams(tvLayoutParam);
-                float len = tv[i].getPaint().measureText(pars[i]);
-                float[] mesW = new float[1];
-                int chars = tv[i].getPaint().breakText(pars[i], true, w, mesW);
-                tvi.setText("" + len + " " + w + " " + w * dens + " " + chars + " " + mesW[0]);
-                tv[i].setText(pars[i]);
-                llMain.addView(tvi);
-                llMain.addView(tv[i]);
-            }
-        } catch (Exception ex) {
-            Log.e("", ex.toString());
-        }
     }
 
     private class Updater extends Thread {

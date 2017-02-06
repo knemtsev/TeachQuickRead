@@ -85,7 +85,7 @@ public class FB2 {
         //Match match0 = Regex.Match(fileText, @".*<body>(.*)</body>",RegexOptions.IgnoreCase);
         int skip = fileText.indexOf("<body>");
         Pattern p = Pattern.compile("<p>(.*)</p>", Pattern.CASE_INSENSITIVE);
-        Pattern pRemLink= Pattern.compile("<a.*</a>", Pattern.CASE_INSENSITIVE);
+        Pattern pRem= Pattern.compile("(<a.*</a>)|(<strong>)|(</strong>)|(<emphasys>)||(</emphasys>)", Pattern.CASE_INSENSITIVE);
         Matcher m = p.matcher(fileText.substring(skip));
 
         int pars = 0;
@@ -97,7 +97,11 @@ public class FB2 {
         int i = 0;
         while (m.find()) {
 //            Log.i(TAG,">>>"+m.group(1)+"<<<");
-            paragraphs[i] = m.group(1);
+            String s=m.group(1);
+            Matcher m2 = pRem.matcher(s);
+            paragraphs[i] = m2.replaceAll("");
+//            Log.d(TAG+1,">"+s+"<");
+//            Log.d(TAG+2,"<"+paragraphs[i]+">");
             i++;
         }
         return paragraphs;

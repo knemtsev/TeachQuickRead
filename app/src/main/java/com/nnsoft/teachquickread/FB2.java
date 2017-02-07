@@ -1,13 +1,20 @@
 package com.nnsoft.teachquickread;
 
+import android.text.TextUtils;
 import android.util.Log;
+
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
+import org.xmlpull.v1.XmlPullParserFactory;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
+import java.util.concurrent.Exchanger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
@@ -18,6 +25,7 @@ import java.util.zip.ZipFile;
  */
 
 public class FB2 {
+    private static final String DEFAULT_ENCODING = "UTF-8";
     String filePath;
     String fileText = null;
     String[] paragraphs = null;
@@ -34,10 +42,12 @@ public class FB2 {
                 if (filePath.toLowerCase().endsWith(".zip")) {
                     ZipFile zf = new ZipFile(filePath);
                     ZipEntry ze = (ZipEntry) zf.entries().nextElement();
-                    fileText = readText(zf.getInputStream(ze));
+                    String enc=seeEncoding(zf,ze);
+                    fileText = readText(zf.getInputStream(ze),enc);
                     zf.close();
                 } else {
-                    fileText = readText(new FileInputStream(filePath));
+                    String enc=seeEncoding(filePath);
+                    fileText = readText(new FileInputStream(filePath),enc);
                 }
             }
         } catch (Exception ex) {
@@ -45,10 +55,65 @@ public class FB2 {
         }
     }
 
+    public String seeEncoding(InputStream is)
+    {
+        String res=DEFAULT_ENCODING;
+
+        try {
+            BufferedReader reader = new BufferedReader(new InputStreamReader(is, Charset.forName(DEFAULT_ENCODING)));
+            String line = reader.readLine();
+            if(line!=null)
+            {
+                Pattern pEnc=Pattern.compile("encoding=\"(.*)\"");
+                Matcher m = pEnc.matcher(line);
+                if(m.find())
+                {
+                    res=m.group(1);
+                    Log.d(TAG,"encoding="+res);
+                }
+                is.close();
+            }
+        } catch (Exception ex)
+        {
+            Log.e(TAG+":seeEncoding", ex.toString());
+        }
+
+        return res;
+    }
+
+    public String seeEncoding(ZipFile zf, ZipEntry ze)
+    {
+        String res=DEFAULT_ENCODING;
+        try {
+            res= seeEncoding( zf.getInputStream(ze) );
+        }
+        catch (Exception ex)
+        {
+            Log.e(TAG+":seeEncoding2", ex.toString());
+        }
+        return res;
+    }
+
+    public String seeEncoding(String fileName)
+    {
+        String res=DEFAULT_ENCODING;
+        try {
+            FileInputStream fis=new FileInputStream(fileName);
+            res= seeEncoding(fis);
+            fis.close();
+        }
+        catch (Exception ex)
+        {
+            Log.e(TAG+":seeEncoding3", ex.toString());
+        }
+        return res;
+    }
+
+
     public FB2(InputStream is)
     {
         try {
-            fileText = readText(is);
+            fileText = readText(is,DEFAULT_ENCODING);
         }catch (Exception ex)
         {
 //            ex.printStackTrace();
@@ -56,34 +121,13 @@ public class FB2 {
         }
     }
 
-    private String readText(InputStream is) {
+    private String readText(InputStream is, String encoding) {
         String res = "";
+        if(encoding==null)
+            encoding="UTF-8";
         try {
-            String utf8="UTF-8";
-            is.mark(128);
-            BufferedReader reader = new BufferedReader(new InputStreamReader(is, Charset.forName(utf8)));
+            BufferedReader reader = new BufferedReader(new InputStreamReader(is, Charset.forName(encoding)));
             String line;
-            line = reader.readLine();
-            if(line!=null)
-            {
-                Log.d(TAG,line);
-                // определяем кодировку
-                Pattern pEnc=Pattern.compile("encoding=\"(.*)\"");
-                Matcher m = pEnc.matcher(line);
-                if(m.find())
-                {
-                    String encoding=m.group(1);
-                    Log.d(TAG,"encoding="+encoding);
-                    if(!encoding.equalsIgnoreCase(utf8))
-                    {
-                        reader.close();
-                        Log.d(TAG,"Charset.forName("+encoding+")="+Charset.forName(encoding));
-                        is.reset();
-                        reader = new BufferedReader(new InputStreamReader(is, Charset.forName(encoding)));
-                    }
-                }
-
-            }
 
             StringBuilder sb = new StringBuilder();
 

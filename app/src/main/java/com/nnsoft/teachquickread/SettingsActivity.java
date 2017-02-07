@@ -11,6 +11,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -25,6 +26,7 @@ import java.io.File;
 public class SettingsActivity extends AppCompatActivity {
 
     private TextView edFileToRead;
+    private Spinner spFileToRead;
     private NumberPicker npFontSize;
     private NumberPicker npWordsNumber;
     private NumberPicker npMaxSpeed;
@@ -41,8 +43,10 @@ public class SettingsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
 
-        edFileToRead = (TextView) findViewById(R.id.edChooseFileToRead);
-        edFileToRead.setText(Options.getFileNameToRead());
+//        edFileToRead = (TextView) findViewById(R.id.edChooseFileToRead);
+//        edFileToRead.setText(Options.getFileNameToRead());
+
+        spFileToRead = (Spinner) findViewById(R.id.spChooseFileToRead);
 
         btnChooseFile = (Button) findViewById(R.id.btnChooseFile);
         btnChooseFile.setOnClickListener(new View.OnClickListener() {
@@ -86,6 +90,8 @@ public class SettingsActivity extends AppCompatActivity {
 
         cbUseHyphen =(CheckBox) findViewById(R.id.cbUseHyphenation);
         cbUseHyphen.setChecked(Options.isUseHyphenation());
+
+        //spFileToRead.se
     }
 
     //Add this method to show Dialog when the required permission has been granted to the app.

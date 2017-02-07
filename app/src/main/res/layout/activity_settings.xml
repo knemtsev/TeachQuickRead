@@ -42,17 +42,26 @@
                 android:orientation="horizontal"
                 android:weightSum="1">
 
-                <TextView
-                    android:id="@+id/edChooseFileToRead"
+                <!--<TextView-->
+                    <!--android:id="@+id/edChooseFileToRead"-->
+                    <!--android:layout_width="wrap_content"-->
+                    <!--android:layout_height="wrap_content"-->
+                    <!--android:layout_weight="1"-->
+                    <!--android:textSize="@dimen/edit_font_size" />-->
+
+
+                <Spinner
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:layout_weight="1"
-                    android:textSize="@dimen/edit_font_size" />
+                    android:id="@+id/spChooseFileToRead"
+                    android:textSize="@dimen/edit_font_size"
+                    />
 
                 <Button
                     android:id="@+id/btnChooseFile"
                     android:layout_width="42dp"
-                    android:layout_height="match_parent"
+                    android:layout_height="wrap_content"
                     android:text="..." />
 
             </LinearLayout>

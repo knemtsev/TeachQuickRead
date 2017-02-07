@@ -4,11 +4,16 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.AssetManager;
+import android.support.annotation.NonNull;
 import android.util.Log;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 
 /**
  * Created by knemt on 24.01.2017.
@@ -35,6 +40,7 @@ public class Options {
     private static boolean fileLoaded;
     private static boolean randomText;  // случайный фрагмент
     private static int endOfLastText;
+    private static Set<String> fileNameList;
 
     private static FB2 fb2;
 
@@ -57,6 +63,7 @@ public class Options {
             p.putString("lastDateSpeedMode", formatDate(lastDateSpeedMode));
             p.putInt("maxSpeed", maxSpeed);
             p.putBoolean("useHyphenation", useHyphenation);
+            p.putStringSet("fileNameList",fileNameList);
             p.commit();
         } catch (Exception ex) {
             Log.e(TAG, ex.toString());
@@ -78,6 +85,7 @@ public class Options {
             maxSpeed = pref.getInt("maxSpeed", 300);
             useHyphenation=pref.getBoolean("useHyphenation",true);
             fileLoaded=false;
+            fileNameList=pref.getStringSet("fileNameList",null);
         } catch (Exception ex) {
             Log.e(TAG, ex.toString());
         }
@@ -86,6 +94,21 @@ public class Options {
     public static String formatDate(Date date) {
         DateFormat df = new SimpleDateFormat(getDateFormat());
         return df.format(date);
+    }
+
+    public static Set<String> getFileNameList() {
+        return fileNameList;
+    }
+
+    public static void setFileNameList(Set<String> fileNameList) {
+        Options.fileNameList = fileNameList;
+    }
+
+    public static void addFileNameToList(String fileName)
+    {
+        if(fileNameList==null)
+            fileNameList=new HashSet<String>();
+        fileNameList.add(fileName);
     }
 
     public static void setFileNameToRead(String _fileNameToRead) {

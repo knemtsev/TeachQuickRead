@@ -59,17 +59,44 @@ public class FB2 {
     private String readText(InputStream is) {
         String res = "";
         try {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(is, Charset.forName("UTF-8")));
-            StringBuilder sb = new StringBuilder();
+            String utf8="UTF-8";
+            is.mark(128);
+            BufferedReader reader = new BufferedReader(new InputStreamReader(is, Charset.forName(utf8)));
             String line;
+            line = reader.readLine();
+            if(line!=null)
+            {
+                Log.d(TAG,line);
+                // определяем кодировку
+                Pattern pEnc=Pattern.compile("encoding=\"(.*)\"");
+                Matcher m = pEnc.matcher(line);
+                if(m.find())
+                {
+                    String encoding=m.group(1);
+                    Log.d(TAG,"encoding="+encoding);
+                    if(!encoding.equalsIgnoreCase(utf8))
+                    {
+                        reader.close();
+                        Log.d(TAG,"Charset.forName("+encoding+")="+Charset.forName(encoding));
+                        is.reset();
+                        reader = new BufferedReader(new InputStreamReader(is, Charset.forName(encoding)));
+                    }
+                }
+
+            }
+
+            StringBuilder sb = new StringBuilder();
+
             while ((line = reader.readLine()) != null) {
                 sb.append(line);
+                Log.d(TAG,line);
                 sb.append("\n\r");
             }
             reader.close();
             res = sb.toString();
         } catch (Exception ex) {
             Log.e(TAG, ex.toString());
+            ex.printStackTrace();
         }
         return res;
     }

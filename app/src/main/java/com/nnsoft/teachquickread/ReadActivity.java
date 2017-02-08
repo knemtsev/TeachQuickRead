@@ -131,7 +131,7 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
         durationForWordMS = (int) (60 * 1000 / fixedSpeedOfReading);
         Log.d(TAG, "fixedSpeedOfReading=" + fixedSpeedOfReading + "w/m durationForWordMS=" + durationForWordMS + "ms");
 
-        mTTS = new TextToSpeech(this, this);
+//        mTTS = new TextToSpeech(this, this);
 
     }
 
@@ -215,23 +215,23 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
     protected void onResume() {
         super.onResume();
 
-        TTSinited=false;
-        if (Options.getMode() == 2) {
-            mTTS.speak("Поехали", TextToSpeech.QUEUE_FLUSH, null);
-            TextView tv=new TextView(this);
-            tv.setText("ждём игициализации Text To Speech");
-            llMain.addView(tv);
-            for(int i=0; i<100 && !TTSinited; i++)
-            {
-                try {
-                    Thread.sleep(100);
-                } catch (Exception ex)
-                {
-
-                }
-            }
-            llMain.removeView(tv);
-        }
+//        TTSinited=false;
+//        if (Options.getMode() == 2) {
+//            mTTS.speak("Поехали", TextToSpeech.QUEUE_FLUSH, null);
+//            TextView tv=new TextView(this);
+//            tv.setText("ждём игициализации Text To Speech");
+//            llMain.addView(tv);
+//            for(int i=0; i<100 && !TTSinited; i++)
+//            {
+//                try {
+//                    Thread.sleep(100);
+//                } catch (Exception ex)
+//                {
+//
+//                }
+//            }
+//            llMain.removeView(tv);
+//        }
 
         curPos = showText(textToRead, 0);
         startReading();
@@ -474,10 +474,10 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
                 break;
         }
 
-        textTS=new String(text,posBegPage,pos-posBegPage);
-        Log.d(TAG,"before speak");
-        mTTS.speak(textTS, TextToSpeech.QUEUE_FLUSH, null);
-        Log.d(TAG,"after speak");
+//        textTS=new String(text,posBegPage,pos-posBegPage);
+//        Log.d(TAG,"before speak");
+//        mTTS.speak(textTS, TextToSpeech.QUEUE_FLUSH, null);
+//        Log.d(TAG,"after speak");
 
         numLines = numLine;
         if (isEot(text, pos) && numLine != maxNumLines) {

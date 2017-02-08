@@ -9,6 +9,8 @@ import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.Spinner;
@@ -22,6 +24,7 @@ import com.github.angads25.filepicker.view.FilePickerDialog;
 import com.travijuu.numberpicker.library.NumberPicker;
 
 import java.io.File;
+import java.util.Set;
 
 public class SettingsActivity extends AppCompatActivity {
 
@@ -56,7 +59,7 @@ public class SettingsActivity extends AppCompatActivity {
                 DialogProperties properties = new DialogProperties();
                 properties.selection_mode = DialogConfigs.SINGLE_MODE;
                 properties.selection_type = DialogConfigs.FILE_SELECT;
-                properties.root = new File(DialogConfigs.DEFAULT_DIR);
+                properties.root = new File(Options.getLastFolder());
                 properties.error_dir = new File(DialogConfigs.DEFAULT_DIR);
                 properties.extensions = null;
 
@@ -67,8 +70,15 @@ public class SettingsActivity extends AppCompatActivity {
                     public void onSelectedFilePaths(String[] files) {
                         //files is the array of the paths of files selected by the Application User.
                         //Log.i(TAG,files[0]);
-                        edFileToRead.setText(files[0]);
-                        Options.setFileLoaded(false);
+                        //edFileToRead.setText(files[0]);
+                        if(files.length>0) {
+                            int li = files[0].lastIndexOf("/");
+                            if (li > 0) Options.setLastFolder(files[0].substring(0, li));
+                            Options.addFileNameToList(files[0]);
+                            Options.setFileNameToRead(files[0]);
+                            Options.setFileLoaded(false);
+                            setFileList();
+                        }
                     }
                 });
                 dialog.show();
@@ -91,7 +101,46 @@ public class SettingsActivity extends AppCompatActivity {
         cbUseHyphen =(CheckBox) findViewById(R.id.cbUseHyphenation);
         cbUseHyphen.setChecked(Options.isUseHyphenation());
 
-        //spFileToRead.se
+        spFileToRead.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            public void onItemSelected(AdapterView<?> parent,
+                                       View itemSelected, int selectedItemPosition, long selectedId) {
+                Set<String> fileList=Options.getFileNameList();
+                if(fileList!=null) {
+                    String[] list = (String[]) fileList.toArray(new String[fileList.size()]);
+                    Options.setFileNameToRead(list[selectedItemPosition]);
+                    Options.setFileLoaded(false);
+                }
+            }
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
+        setFileList();
+    }
+
+    private void setFileList() {
+        Set<String> fileList=Options.getFileNameList();
+        if(fileList!=null) {
+            String[] list = (String[]) fileList.toArray(new String[fileList.size()]);
+            String[] listShort=new String[list.length];
+            for(int i=0; i<list.length; i++)
+            {
+                listShort[i]=list[i].substring(list[i].lastIndexOf("/")+1);
+            }
+            ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, listShort);
+            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            spFileToRead.setAdapter(adapter);
+            int num=0;
+            String curName=Options.getFileNameToRead();
+            for(int i=0; i<list.length; i++)
+            {
+                if(curName.equalsIgnoreCase(list[i])) {
+                    num = i;
+                    break;
+                }
+            }
+            spFileToRead.setSelection(num);
+        }
+
     }
 
     //Add this method to show Dialog when the required permission has been granted to the app.
@@ -124,7 +173,7 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     private void saveState() {
-        Options.setFileNameToRead(edFileToRead.getText().toString());
+//        Options.setFileNameToRead(edFileToRead.getText().toString());
         Options.setFontSize(npFontSize.getValue());
         Options.setWordsNum(npWordsNumber.getValue());
         Options.setMaxSpeed(npMaxSpeed.getValue());

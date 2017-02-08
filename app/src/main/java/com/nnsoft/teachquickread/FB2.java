@@ -1,20 +1,18 @@
 package com.nnsoft.teachquickread;
 
-import android.text.TextUtils;
 import android.util.Log;
 
 import org.xmlpull.v1.XmlPullParser;
-import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
-import java.util.concurrent.Exchanger;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
@@ -28,6 +26,7 @@ public class FB2 {
     private static final String DEFAULT_ENCODING = "UTF-8";
     String filePath;
     String fileText = null;
+    List<String> listParagraphs;
     String[] paragraphs = null;
     static String TAG = "FB2";
 
@@ -43,14 +42,25 @@ public class FB2 {
                     ZipFile zf = new ZipFile(filePath);
                     ZipEntry ze = (ZipEntry) zf.entries().nextElement();
                     String enc=seeEncoding(zf,ze);
-                    fileText = readText(zf.getInputStream(ze),enc);
+                    listParagraphs = readTextXML(zf.getInputStream(ze),enc);
                     zf.close();
                 } else {
                     String enc=seeEncoding(filePath);
-                    fileText = readText(new FileInputStream(filePath),enc);
+                    listParagraphs = readTextXML(new FileInputStream(filePath),enc);
                 }
             }
         } catch (Exception ex) {
+            Log.d(TAG,ex.toString());
+        }
+    }
+
+    public FB2(InputStream is)
+    {
+        try {
+            listParagraphs = readTextXML(is,DEFAULT_ENCODING);
+        }catch (Exception ex)
+        {
+//            ex.printStackTrace();
             Log.d(TAG,ex.toString());
         }
     }
@@ -110,17 +120,6 @@ public class FB2 {
     }
 
 
-    public FB2(InputStream is)
-    {
-        try {
-            fileText = readText(is,DEFAULT_ENCODING);
-        }catch (Exception ex)
-        {
-//            ex.printStackTrace();
-            Log.d(TAG,ex.toString());
-        }
-    }
-
     private String readText(InputStream is, String encoding) {
         String res = "";
         if(encoding==null)
@@ -131,6 +130,8 @@ public class FB2 {
 
             StringBuilder sb = new StringBuilder();
 
+            StringBuilder paragraph= null;
+            int numParagraph=0;
             while ((line = reader.readLine()) != null) {
                 sb.append(line);
                 Log.d(TAG,line);
@@ -145,7 +146,67 @@ public class FB2 {
         return res;
     }
 
-    public String[] GetParagraphs() {
+    private List<String> readTextXML(InputStream is, String encoding) {
+        List<String> list=new LinkedList<String>();
+
+        try {
+            XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
+            factory.setNamespaceAware(true);
+            XmlPullParser xpp = factory.newPullParser();
+            xpp.setInput(is, encoding);
+
+            String lastTag="";
+            while (xpp.getEventType() != XmlPullParser.END_DOCUMENT) {
+                switch (xpp.getEventType()) {
+                    // начало документа
+                    case XmlPullParser.START_DOCUMENT:
+                        Log.d(TAG, "START_DOCUMENT");
+                        break;
+                    case XmlPullParser.START_TAG:
+                        lastTag=xpp.getName();
+                        Log.d(TAG, "START_TAG: name = " + xpp.getName());
+//                        if(xpp.getName().equalsIgnoreCase("p"))
+//                            Log.d(TAG, "P = " + xpp.getText());
+                        break;
+                    // конец тэга
+                    case XmlPullParser.END_TAG:
+                        Log.d(TAG, "STOP_TAG: name = " + xpp.getName());
+                        switch(xpp.getName().toLowerCase())
+                        {
+                            case "body":
+                                break;
+                            case "p":
+                                break;
+                            default:
+                                break;
+                        }
+                        break;
+                    // содержимое тэга
+                    case XmlPullParser.TEXT:
+                        if(lastTag.equalsIgnoreCase("p")) {
+                            Log.d(TAG, "P = " + xpp.getText());
+                            list.add(xpp.getText());
+                        }
+                        break;
+
+                    default:
+                        break;
+                }
+                // следующий элемент
+                xpp.next();
+            }
+
+        } catch (Exception ex)
+        {
+            Log.e(TAG,ex.toString());
+            ex.printStackTrace();
+        }
+
+        return list;
+    }
+
+
+    public String[] GetParagraphsOld() {
         if (paragraphs != null)
             return paragraphs;
 
@@ -175,6 +236,18 @@ public class FB2 {
 //            Log.d(TAG+2,"<"+paragraphs[i]+">");
             i++;
         }
+        return paragraphs;
+    }
+
+    public String[] GetParagraphs() {
+        if (paragraphs != null)
+            return paragraphs;
+
+        if (listParagraphs == null)
+            return null;
+
+        paragraphs=listParagraphs.toArray(new String[listParagraphs.size()]);
+
         return paragraphs;
     }
 

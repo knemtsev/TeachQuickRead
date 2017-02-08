@@ -2,6 +2,9 @@ package com.nnsoft.teachquickread;
 
 import java.util.Random;
 
+import io.realm.Realm;
+import io.realm.RealmResults;
+
 /**
  * Created by knemt on 24.01.2017.
  */
@@ -48,6 +51,21 @@ public class Util {
             return sb.toString().toCharArray();
         } else
             return "No data".toCharArray();
+    }
+
+    public static void clearParagraphs()
+    {
+        Realm realm=Realm.getDefaultInstance();
+        final RealmResults<Paragraph> results = realm.where(Paragraph.class).findAll();
+
+        realm.executeTransaction(new Realm.Transaction() {
+            @Override
+            public void execute(Realm realm) {
+                // Delete all matches
+                results.deleteAllFromRealm();
+            }
+        });
+
     }
 
 }

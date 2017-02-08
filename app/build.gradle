@@ -32,5 +32,5 @@ dependencies {
     compile 'com.android.support:support-vector-drawable:25.1.0'
     testCompile 'junit:junit:4.12'
     compile 'com.github.travijuu:numberpicker:1.0.5'
-    compile 'com.github.angads25:filepicker:1.0.7'
+    compile project(':filepicker')
 }

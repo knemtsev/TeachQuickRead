@@ -4,15 +4,14 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.AssetManager;
-import android.support.annotation.NonNull;
 import android.util.Log;
+
+import com.github.angads25.filepicker.model.DialogConfigs;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 /**
@@ -41,6 +40,7 @@ public class Options {
     private static boolean randomText;  // случайный фрагмент
     private static int endOfLastText;
     private static Set<String> fileNameList;
+    private static String lastFolder;
 
     private static FB2 fb2;
 
@@ -64,6 +64,7 @@ public class Options {
             p.putInt("maxSpeed", maxSpeed);
             p.putBoolean("useHyphenation", useHyphenation);
             p.putStringSet("fileNameList",fileNameList);
+            p.putString("lastFolder",lastFolder);
             p.commit();
         } catch (Exception ex) {
             Log.e(TAG, ex.toString());
@@ -86,6 +87,11 @@ public class Options {
             useHyphenation=pref.getBoolean("useHyphenation",true);
             fileLoaded=false;
             fileNameList=pref.getStringSet("fileNameList",null);
+            if(fileNameList==null && fileNameToRead!=null && fileNameToRead.length()>0)
+                addFileNameToList(fileNameToRead);
+
+            lastFolder=pref.getString("lastFolder", DialogConfigs.DEFAULT_DIR);
+
         } catch (Exception ex) {
             Log.e(TAG, ex.toString());
         }
@@ -104,11 +110,20 @@ public class Options {
         Options.fileNameList = fileNameList;
     }
 
+    public static String getLastFolder() {
+        return lastFolder;
+    }
+
+    public static void setLastFolder(String lastFolder) {
+        Options.lastFolder = lastFolder;
+    }
+
     public static void addFileNameToList(String fileName)
     {
         if(fileNameList==null)
             fileNameList=new HashSet<String>();
-        fileNameList.add(fileName);
+        if(!fileNameList.contains(fileName))
+            fileNameList.add(fileName);
     }
 
     public static void setFileNameToRead(String _fileNameToRead) {

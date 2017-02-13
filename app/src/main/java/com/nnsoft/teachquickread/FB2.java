@@ -1,5 +1,7 @@
 package com.nnsoft.teachquickread;
 
+import android.app.Activity;
+import android.content.res.AssetManager;
 import android.util.Log;
 
 import org.xmlpull.v1.XmlPullParser;
@@ -19,7 +21,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 /**
- * Created by knemt on 24.01.2017.
+ * Created by Nicholas Nemtsev on 24.01.2017.
+ * knemtsev@gmail.com
  */
 
 public class FB2 {
@@ -30,37 +33,37 @@ public class FB2 {
     String[] paragraphs = null;
     static String TAG = "FB2";
 
-    public FB2(String _filePath) {
+    public FB2(String _filePath, Activity act) {
 
         filePath = _filePath;
         try {
-            File f = new File(filePath);
+            if(filePath.startsWith("/")) {
+                File f = new File(filePath);
 //            Log.i("FB2",filePath);
-            if (f.exists()) {
+                if (f.exists()) {
 //                Log.i("F2","exist "+f.getName());
-                if (filePath.toLowerCase().endsWith(".zip")) {
-                    ZipFile zf = new ZipFile(filePath);
-                    ZipEntry ze = (ZipEntry) zf.entries().nextElement();
-                    String enc=seeEncoding(zf,ze);
-                    listParagraphs = readTextXML(zf.getInputStream(ze),enc);
-                    zf.close();
-                } else {
-                    String enc=seeEncoding(filePath);
-                    listParagraphs = readTextXML(new FileInputStream(filePath),enc);
+                    if (filePath.toLowerCase().endsWith(".zip")) {
+                        ZipFile zf = new ZipFile(filePath);
+                        ZipEntry ze = (ZipEntry) zf.entries().nextElement();
+                        String enc = seeEncoding(zf, ze);
+                        listParagraphs = readTextXML(zf.getInputStream(ze), enc);
+                        zf.close();
+                    } else {
+                        String enc = seeEncoding(filePath);
+                        FileInputStream is=new FileInputStream(filePath);
+                        listParagraphs = readTextXML(is, enc);
+                        is.close();
+                    }
                 }
             }
+            else
+            {
+                AssetManager assetManager = act.getAssets();
+                InputStream is=assetManager.open(filePath);
+                listParagraphs = readTextXML(is, DEFAULT_ENCODING);
+                is.close();
+            }
         } catch (Exception ex) {
-            Log.d(TAG,ex.toString());
-        }
-    }
-
-    public FB2(InputStream is)
-    {
-        try {
-            listParagraphs = readTextXML(is,DEFAULT_ENCODING);
-        }catch (Exception ex)
-        {
-//            ex.printStackTrace();
             Log.d(TAG,ex.toString());
         }
     }

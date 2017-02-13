@@ -7,8 +7,10 @@ import io.realm.RealmObject;
  * Created by Nicholas on 07.02.2017.
  */
 
+// DB record
 public class Paragraph extends RealmObject {
     private int id; // primary key и он же номер параграфа
+    private int fileNameCRC32;
     private int numWords; // количество слов в параграфе
     private String paragraph; // строка
 
@@ -19,6 +21,14 @@ public class Paragraph extends RealmObject {
 
     public void setId(int id) {
         this.id = id;
+    }
+
+    public int getFileNameCRC32() {
+        return fileNameCRC32;
+    }
+
+    public void setFileNameCRC32(int fileNameCRC32) {
+        this.fileNameCRC32 = fileNameCRC32;
     }
 
     public int getNumWords() {

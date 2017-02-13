@@ -1,6 +1,7 @@
 package com.nnsoft.teachquickread;
 
 import java.util.Random;
+import java.util.zip.CRC32;
 
 import io.realm.Realm;
 import io.realm.RealmResults;
@@ -68,4 +69,10 @@ public class Util {
 
     }
 
+    public static int SCRC32(String s)
+    {
+        CRC32 crc = new CRC32();
+        crc.update(s.getBytes());
+        return (int)( crc.getValue() );
+    }
 }

@@ -41,6 +41,7 @@ public class Options {
     private static int endOfLastText;
     private static Set<String> fileNameList;
     private static String lastFolder;
+    private static Cache cache=new Cache();
 
     private static FB2 fb2;
 
@@ -116,6 +117,10 @@ public class Options {
 
     public static void setLastFolder(String lastFolder) {
         Options.lastFolder = lastFolder;
+    }
+
+    public static String getAssetFB2File() {
+        return assetFB2File;
     }
 
     public static void addFileNameToList(String fileName)
@@ -258,5 +263,9 @@ public class Options {
 
     public static void setFileLoaded(boolean fileLoaded) {
         Options.fileLoaded = fileLoaded;
+    }
+
+    public static Cache getCache() {
+        return cache;
     }
 }

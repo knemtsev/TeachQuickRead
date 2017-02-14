@@ -36,6 +36,8 @@ public class SettingsActivity extends AppCompatActivity {
     private CheckBox cbSkipVowels;
     private CheckBox cbUseHyphen;
     Button btnChooseFile;
+    Button btnClearCache;
+
     private static final int READ_REQUEST_CODE = 42;
     private static final int FILE_CODE = 43;
     private static final String TAG = "Settings";
@@ -83,6 +85,14 @@ public class SettingsActivity extends AppCompatActivity {
                 });
                 dialog.show();
 
+            }
+        });
+
+        btnClearCache=(Button)findViewById(R.id.btnClearCache);
+        btnClearCache.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Options.getCache().clear();
             }
         });
 

@@ -29,4 +29,5 @@
     <string name="max_speed">Макc. скорость (с/м)</string>
     <string name="use_hyphenation">Использовать переносы</string>
     <string name="wait_file">загрузка файла...</string>
+    <string name="clear_cache">Удалить временные данные</string>
 </resources>

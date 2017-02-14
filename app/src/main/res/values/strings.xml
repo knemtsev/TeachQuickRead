@@ -31,4 +31,5 @@
     <string name="max_speed">Max speed (w/m)</string>
     <string name="use_hyphenation">Use hyphenation</string>
     <string name="wait_file">file loading...</string>
+    <string name="clear_cache">Clear Cache</string>
 </resources>

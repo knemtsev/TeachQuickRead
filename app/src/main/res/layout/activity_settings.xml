@@ -66,6 +66,13 @@
 
             </LinearLayout>
 
+            <Button
+                android:id="@+id/btnClearCache"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/clear_cache"
+                />
+
             <LinearLayout
                 android:layout_marginTop="@dimen/text_margin"
                 android:layout_width="match_parent"

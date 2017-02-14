@@ -3,7 +3,6 @@ package com.nnsoft.teachquickread;
 import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.content.res.AssetManager;
 import android.util.Log;
 
 import com.github.angads25.filepicker.model.DialogConfigs;
@@ -20,7 +19,7 @@ import java.util.Set;
 
 public class Options {
     private static final String TAG = "Options";
-    private static final String assetFB2File="vig.fb2";
+    private static final String assetFB2File="ir.fb2";
     private static Options ourInstance = new Options();
 
     // properties
@@ -41,7 +40,9 @@ public class Options {
     private static int endOfLastText;
     private static Set<String> fileNameList;
     private static String lastFolder;
-    private static Cache cache=new Cache();
+    private static Cache cache;
+    private static CachedFile cachedFile;
+    private static Activity mainActivity;
 
     private static FB2 fb2;
 
@@ -73,7 +74,10 @@ public class Options {
     }
 
     public static void rest(Activity act) {
+        mainActivity=act;
+        cache=new Cache(act);
         try {
+
             SharedPreferences pref = act.getPreferences(Context.MODE_PRIVATE);
             setFileNameToRead(pref.getString("fileNameToRead", ""));
             readSpeed = pref.getInt("readSpeed", 75);
@@ -92,6 +96,8 @@ public class Options {
                 addFileNameToList(fileNameToRead);
 
             lastFolder=pref.getString("lastFolder", DialogConfigs.DEFAULT_DIR);
+            //cachedFile=cache.getFile(getFileNameToRead());
+            cachedFile=cache.getFile(assetFB2File);
 
         } catch (Exception ex) {
             Log.e(TAG, ex.toString());
@@ -154,26 +160,26 @@ public class Options {
 
     public static void asyncSetParagraphs(Activity act)
     {
-        paragraphs=null;
-        if(fileNameToRead.length()>0) {
-            try {
-                fb2 = new FB2(fileNameToRead);
-                paragraphs = fb2.GetParagraphs();
-            } catch (Exception ex) {
-                Log.d(TAG,ex.toString());
-            }
-        }
-        if(paragraphs==null)
-        {
-            try {
-                AssetManager assetManager = act.getAssets();
-                fb2=new FB2(assetManager.open(assetFB2File));
-                paragraphs = fb2.GetParagraphs();
-            } catch (Exception ex) {
-                Log.d(TAG,ex.toString());
-            }
-        }
-        setFileLoaded(paragraphs!=null);
+//        paragraphs=null;
+//        if(fileNameToRead.length()>0) {
+//            try {
+//                fb2 = new FB2(fileNameToRead);
+//                paragraphs = fb2.GetParagraphs();
+//            } catch (Exception ex) {
+//                Log.d(TAG,ex.toString());
+//            }
+//        }
+//        if(paragraphs==null)
+//        {
+//            try {
+//                AssetManager assetManager = act.getAssets();
+//                fb2=new FB2(assetManager.open(assetFB2File));
+//                paragraphs = fb2.GetParagraphs();
+//            } catch (Exception ex) {
+//                Log.d(TAG,ex.toString());
+//            }
+//        }
+//        setFileLoaded(paragraphs!=null);
     }
 
     public static String[] getParagraphs() {
@@ -267,5 +273,13 @@ public class Options {
 
     public static Cache getCache() {
         return cache;
+    }
+
+    public static CachedFile getCachedFile() {
+        return cachedFile;
+    }
+
+    public static void setCachedFile(CachedFile cachedFile) {
+        Options.cachedFile = cachedFile;
     }
 }

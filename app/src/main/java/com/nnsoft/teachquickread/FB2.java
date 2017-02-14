@@ -15,6 +15,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Stack;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
@@ -32,9 +33,12 @@ public class FB2 {
     List<String> listParagraphs;
     String[] paragraphs = null;
     static String TAG = "FB2";
+    private Cache cache;
+    private int numParagraphs=0;
 
-    public FB2(String _filePath, Activity act) {
+    public FB2(String _filePath, Activity act, Cache _cache) {
 
+        cache=_cache;
         filePath = _filePath;
         try {
             if(filePath.startsWith("/")) {
@@ -149,8 +153,15 @@ public class FB2 {
         return res;
     }
 
+    private static String TAG_P="p";
+    private static String TAG_SECTION="section";
+    private static String TAG_TITLE="title";
+    private static String TAG_STRONG="strong";
+
     private List<String> readTextXML(InputStream is, String encoding) {
         List<String> list=new LinkedList<String>();
+        int fileNameCRC32=Util.SCRC32(filePath);
+        int numPar=0;
 
         try {
             XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
@@ -158,7 +169,9 @@ public class FB2 {
             XmlPullParser xpp = factory.newPullParser();
             xpp.setInput(is, encoding);
 
-            String lastTag="";
+            String tag="";
+            Stack<String> tagStack=new Stack<String>();
+            StringBuilder paragraph=null;
             while (xpp.getEventType() != XmlPullParser.END_DOCUMENT) {
                 switch (xpp.getEventType()) {
                     // начало документа
@@ -166,29 +179,47 @@ public class FB2 {
                         Log.d(TAG, "START_DOCUMENT");
                         break;
                     case XmlPullParser.START_TAG:
-                        lastTag=xpp.getName();
-                        Log.d(TAG, "START_TAG: name = " + xpp.getName());
-//                        if(xpp.getName().equalsIgnoreCase("p"))
-//                            Log.d(TAG, "P = " + xpp.getText());
+                        tag=xpp.getName().toLowerCase();
+                        tagStack.push(tag);
+                        Log.d(TAG, "START_TAG: name = " + tag);
+                        if(tag.equals(TAG_P))
+                            paragraph=new StringBuilder();
                         break;
                     // конец тэга
                     case XmlPullParser.END_TAG:
-                        Log.d(TAG, "STOP_TAG: name = " + xpp.getName());
-                        switch(xpp.getName().toLowerCase())
+                        tag=tagStack.pop();
+                        Log.d(TAG, "END_TAG: name = " + xpp.getName());
+                        if(tag.equalsIgnoreCase(xpp.getName()))
                         {
-                            case "body":
-                                break;
-                            case "p":
-                                break;
-                            default:
-                                break;
+                            if(tag.equals(TAG_P) && !tagStack.empty() && tagStack.peek().equals(TAG_SECTION) && paragraph!=null)
+                            {
+                                Paragraph par=new Paragraph();
+                                par.setId(numPar);
+                                String parS=paragraph.toString();
+                                par.setParagraph(parS);
+                                par.setFileNameCRC32(fileNameCRC32);
+                                par.setNumWords(Util.CountWords(parS));
+                                Log.d(TAG, "END_TAG: p = [" + parS +"]");
+                                numPar++;
+                                paragraph=null;
+                            }
+
                         }
                         break;
                     // содержимое тэга
                     case XmlPullParser.TEXT:
-                        if(lastTag.equalsIgnoreCase("p")) {
-                            Log.d(TAG, "P = " + xpp.getText());
-                            list.add(xpp.getText());
+                        String text=xpp.getText();
+                        Log.d(TAG, "TEXT[" + tagStack.peek()+"]=<"+ text+">");
+                        String lastTag=tagStack.peek();
+                        if(lastTag.equals(TAG_P)) {
+                            list.add(text);
+                            if(paragraph!=null)
+                                paragraph.append(text);
+                        }
+                        else if(lastTag.equals(TAG_STRONG)) // или другие подобные теги
+                        {
+                            if(paragraph!=null)
+                                paragraph.append(text);
                         }
                         break;
 
@@ -198,6 +229,7 @@ public class FB2 {
                 // следующий элемент
                 xpp.next();
             }
+            numParagraphs=numPar;
 
         } catch (Exception ex)
         {
@@ -254,4 +286,7 @@ public class FB2 {
         return paragraphs;
     }
 
+    public int getNumParagraphs() {
+        return numParagraphs;
+    }
 }

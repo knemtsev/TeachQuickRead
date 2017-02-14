@@ -31,7 +31,7 @@ public class Cache {
                 cachedFile = realm.createObject(CachedFile.class);
                 //cachedFile=new CachedFile();
                 cachedFile.setFileName(fileName);
-                cachedFile.setFileNameCRC32();
+                cachedFile.setFileNameCRC32(curFileCRC32);
                 cachedFile.setNumberOfParagraphs(fb2.getNumParagraphs());
                 realm.commitTransaction();
             }catch (Exception ex)

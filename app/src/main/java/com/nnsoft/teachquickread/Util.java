@@ -54,19 +54,35 @@ public class Util {
             return "No data".toCharArray();
     }
 
-    public static void clearParagraphs()
+    public static char[] getRandomText(int words)
     {
+        StringBuilder sb=new StringBuilder();
+        CachedFile cachedFile=Options.getCachedFile();
         Realm realm=Realm.getDefaultInstance();
-        final RealmResults<Paragraph> results = realm.where(Paragraph.class).findAll();
-
-        realm.executeTransaction(new Realm.Transaction() {
-            @Override
-            public void execute(Realm realm) {
-                // Delete all matches
-                results.deleteAllFromRealm();
+        if(cachedFile!=null)
+        {
+            Random rnd = new Random(System.currentTimeMillis());
+            int maxNumLines=cachedFile.getNumberOfParagraphs();
+            int startNumLine = rnd.nextInt(maxNumLines);
+            int numLines = 0;
+            int lenW = 0;
+            for (int i = startNumLine; i < maxNumLines && lenW < words; i++) {
+                Paragraph p=cachedFile.getParList().get(i);
+                lenW += p.getNumWords();
+                sb.append(p.getText()+"\n");
+                numLines++;
             }
-        });
 
+            while (lenW < words && startNumLine > 0) {
+                startNumLine--;
+                Paragraph p=cachedFile.getParList().get(startNumLine);
+                numLines++;
+                lenW += p.getNumWords();
+                sb.insert(0,p.getText()+"\n");
+            }
+
+        }
+        return sb.toString().toCharArray();
     }
 
     public static int SCRC32(String s)

@@ -11,27 +11,26 @@ import io.realm.RealmResults;
  */
 
 public class Cache {
-    private Realm realm;
     Activity mainActivity;
-    private int curFileCRC32;
+    private CachedFile cachedFile;
+
     public Cache(Activity _mainActivity)
     {
         mainActivity=_mainActivity;
-        realm=Realm.getDefaultInstance();
     }
 
     public CachedFile getFile(String fileName)
     {
-        CachedFile cachedFile=realm.where(CachedFile.class).equalTo("fileName", fileName).findFirst();
+        Realm realm;
+        realm=Realm.getDefaultInstance();
+        cachedFile=realm.where(CachedFile.class).equalTo("fileName", fileName).findFirst();
         if(cachedFile==null){
             try {
                 realm.beginTransaction();
-                curFileCRC32=Util.SCRC32(fileName);
-                FB2 fb2 = new FB2(fileName, mainActivity, this);
+                FB2 fb2 = new FB2(fileName, mainActivity, this, realm);
                 cachedFile = realm.createObject(CachedFile.class);
                 //cachedFile=new CachedFile();
                 cachedFile.setFileName(fileName);
-                cachedFile.setFileNameCRC32(curFileCRC32);
                 cachedFile.setNumberOfParagraphs(fb2.getNumParagraphs());
                 realm.commitTransaction();
             }catch (Exception ex)
@@ -42,28 +41,21 @@ public class Cache {
         return cachedFile;
     }
 
-    public void putParagraph(int num, String text)
+    public void putParagraph(int num, String text, Realm realm)
     {
         Paragraph p=realm.createObject(Paragraph.class);
-        p.setFileNameCRC32(curFileCRC32);
         p.setId(num);
-        p.setParagraph(text);
+        p.setText(text);
         p.setNumWords(Util.CountWords(text));
+        cachedFile.getParList().add(p);
     }
 
     public void clear()
     {
-        // clear paragraphs
-        final RealmResults<Paragraph> resP = realm.where(Paragraph.class).findAll();
-        realm.executeTransaction(new Realm.Transaction() {
-            @Override
-            public void execute(Realm realm) {
-                // Delete all matches
-                resP.deleteAllFromRealm();
-            }
-        });
         // clear files
-        final RealmResults<Paragraph> resF = realm.where(Paragraph.class).findAll();
+        Realm realm;
+        realm=Realm.getDefaultInstance();
+        final RealmResults<CachedFile> resF = realm.where(CachedFile.class).findAll();
         realm.executeTransaction(new Realm.Transaction() {
             @Override
             public void execute(Realm realm) {

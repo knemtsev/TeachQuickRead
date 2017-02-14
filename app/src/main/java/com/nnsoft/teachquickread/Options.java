@@ -19,7 +19,7 @@ import java.util.Set;
 
 public class Options {
     private static final String TAG = "Options";
-    private static final String assetFB2File="ir.fb2";
+    private static final String assetFB2File="vig.fb2";
     private static Options ourInstance = new Options();
 
     // properties
@@ -79,7 +79,7 @@ public class Options {
         try {
 
             SharedPreferences pref = act.getPreferences(Context.MODE_PRIVATE);
-            setFileNameToRead(pref.getString("fileNameToRead", ""));
+            setFileNameToRead(pref.getString("fileNameToRead", assetFB2File));
             readSpeed = pref.getInt("readSpeed", 75);
             fontSize = pref.getInt("fontSize", 30);
             mode = pref.getInt("mode", 1);
@@ -97,7 +97,7 @@ public class Options {
 
             lastFolder=pref.getString("lastFolder", DialogConfigs.DEFAULT_DIR);
             //cachedFile=cache.getFile(getFileNameToRead());
-            cachedFile=cache.getFile(assetFB2File);
+            //cachedFile=cache.getFile(assetFB2File);
 
         } catch (Exception ex) {
             Log.e(TAG, ex.toString());
@@ -160,6 +160,10 @@ public class Options {
 
     public static void asyncSetParagraphs(Activity act)
     {
+
+        fileLoaded=false;
+        cachedFile=cache.getFile(getFileNameToRead());
+        fileLoaded=true;
 //        paragraphs=null;
 //        if(fileNameToRead.length()>0) {
 //            try {

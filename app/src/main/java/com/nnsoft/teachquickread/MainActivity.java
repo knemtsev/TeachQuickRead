@@ -83,7 +83,7 @@ public class MainActivity extends AppCompatActivity {
 //                try { sleep(500); } catch (Exception ex) {  }
 
                 Intent intent = new Intent(v.getContext(), ReadActivity.class);
-                Options.setTextToRead(Util.GetRandomText(Options.getParagraphs(), Options.getWordsNum()));
+                Options.setTextToRead(Util.getRandomText(Options.getWordsNum()));
                 startActivity(intent);
 
             }
@@ -159,8 +159,10 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
         setStateOfStartButton();
         if(!Options.isFileLoaded()) {
-            fl = new FileLoader();
-            fl.start();
+//            fl = new FileLoader();
+//            fl.start();
+            Options.asyncSetParagraphs(MainActivity.this);
+            setStateOfStartButton();
         }
     }
     @Override

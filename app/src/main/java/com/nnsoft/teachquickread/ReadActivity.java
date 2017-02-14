@@ -50,38 +50,6 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
     int wordsOnPage; // количество строк на текущем экране
     int fixedSpeedOfReading; // заданная скорость чтения слов/минуту
     int durationForWordMS;  // время на одно слово в мс
-    Map<Integer, Integer> linesNumByFont = new HashMap<Integer, Integer>() {{
-        put(12, 34);
-        put(13, 31);
-        put(14, 29);
-        put(15, 27);
-        put(16, 25);
-        put(17, 24);
-        put(18, 23);
-        put(19, 21);
-        put(20, 20);
-        put(21, 19);
-        put(22, 18);
-        put(23, 18);
-        put(24, 17);
-        put(25, 16);
-        put(26, 16);
-        put(27, 15);
-        put(28, 14);
-        put(29, 14);
-        put(30, 14);
-        put(31, 13);
-        put(32, 13);
-        put(33, 12);
-        put(34, 12);
-        put(35, 12);
-        put(36, 11);
-        put(37, 11);
-        put(38, 11);
-        put(39, 10);
-        put(40, 10);
-        put(41, 10);
-    }};
     private String TAG = "ReadActivity";
     private int activity_horizontal_margin;
     private int widthPx, heightPx;

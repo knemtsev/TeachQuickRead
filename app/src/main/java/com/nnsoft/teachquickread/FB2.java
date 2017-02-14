@@ -21,6 +21,8 @@ import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import io.realm.Realm;
+
 /**
  * Created by Nicholas Nemtsev on 24.01.2017.
  * knemtsev@gmail.com
@@ -34,12 +36,14 @@ public class FB2 {
     String[] paragraphs = null;
     static String TAG = "FB2";
     private Cache cache;
+    private Realm realm;
     private int numParagraphs=0;
 
-    public FB2(String _filePath, Activity act, Cache _cache) {
+    public FB2(String filePath, Activity act, Cache cache, Realm realm) {
 
-        cache=_cache;
-        filePath = _filePath;
+        this.cache=cache;
+        this.realm=realm;
+        this.filePath = filePath;
         try {
             if(filePath.startsWith("/")) {
                 File f = new File(filePath);
@@ -50,12 +54,12 @@ public class FB2 {
                         ZipFile zf = new ZipFile(filePath);
                         ZipEntry ze = (ZipEntry) zf.entries().nextElement();
                         String enc = seeEncoding(zf, ze);
-                        listParagraphs = readTextXML(zf.getInputStream(ze), enc);
+                        readTextXML(zf.getInputStream(ze), enc);
                         zf.close();
                     } else {
                         String enc = seeEncoding(filePath);
                         FileInputStream is=new FileInputStream(filePath);
-                        listParagraphs = readTextXML(is, enc);
+                        readTextXML(is, enc);
                         is.close();
                     }
                 }
@@ -64,7 +68,7 @@ public class FB2 {
             {
                 AssetManager assetManager = act.getAssets();
                 InputStream is=assetManager.open(filePath);
-                listParagraphs = readTextXML(is, DEFAULT_ENCODING);
+                readTextXML(is, DEFAULT_ENCODING);
                 is.close();
             }
         } catch (Exception ex) {
@@ -158,9 +162,7 @@ public class FB2 {
     private static String TAG_TITLE="title";
     private static String TAG_STRONG="strong";
 
-    private List<String> readTextXML(InputStream is, String encoding) {
-        List<String> list=new LinkedList<String>();
-        int fileNameCRC32=Util.SCRC32(filePath);
+    private void readTextXML(InputStream is, String encoding) {
         int numPar=0;
 
         try {
@@ -193,17 +195,12 @@ public class FB2 {
                         {
                             if(tag.equals(TAG_P) && !tagStack.empty() && tagStack.peek().equals(TAG_SECTION) && paragraph!=null)
                             {
-                                Paragraph par=new Paragraph();
-                                par.setId(numPar);
                                 String parS=paragraph.toString();
-                                par.setParagraph(parS);
-                                par.setFileNameCRC32(fileNameCRC32);
-                                par.setNumWords(Util.CountWords(parS));
+                                cache.putParagraph(numPar,parS,realm);
                                 Log.d(TAG, "END_TAG: p = [" + parS +"]");
                                 numPar++;
                                 paragraph=null;
                             }
-
                         }
                         break;
                     // содержимое тэга
@@ -212,7 +209,6 @@ public class FB2 {
                         Log.d(TAG, "TEXT[" + tagStack.peek()+"]=<"+ text+">");
                         String lastTag=tagStack.peek();
                         if(lastTag.equals(TAG_P)) {
-                            list.add(text);
                             if(paragraph!=null)
                                 paragraph.append(text);
                         }
@@ -237,7 +233,6 @@ public class FB2 {
             ex.printStackTrace();
         }
 
-        return list;
     }
 
 

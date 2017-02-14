@@ -1,5 +1,6 @@
 package com.nnsoft.teachquickread;
 
+import io.realm.RealmList;
 import io.realm.RealmObject;
 
 /**
@@ -10,8 +11,8 @@ import io.realm.RealmObject;
 // DB record
 public class CachedFile extends RealmObject {
     private String fileName;
-    private int fileNameCRC32;
     private int numberOfParagraphs; // количество параграфов
+    private RealmList<Paragraph> parList=new RealmList<Paragraph>();
 
     public String getFileName() {
         return fileName;
@@ -21,19 +22,15 @@ public class CachedFile extends RealmObject {
         this.fileName = fileName;
     }
 
-    public int getFileNameCRC32() {
-        return fileNameCRC32;
-    }
-
-    public void setFileNameCRC32(int fileNameCRC32) {
-        this.fileNameCRC32 = fileNameCRC32;
-    }
-
     public int getNumberOfParagraphs() {
         return numberOfParagraphs;
     }
 
     public void setNumberOfParagraphs(int numberOfParagraphs) {
         this.numberOfParagraphs = numberOfParagraphs;
+    }
+
+    public RealmList<Paragraph> getParList() {
+        return parList;
     }
 }

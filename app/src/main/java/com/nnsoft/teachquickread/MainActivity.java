@@ -17,7 +17,7 @@ import io.realm.Realm;
 
 public class MainActivity extends AppCompatActivity {
     private final static String TAG = "MainActivity";
-    private final static boolean isPro = false;
+    private final static boolean isPro = true;
 
     private LinearLayout llFixedSpeed;
     private RadioGroup rgMode;
@@ -159,10 +159,10 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
         setStateOfStartButton();
         if(!Options.isFileLoaded()) {
-//            fl = new FileLoader();
-//            fl.start();
-            Options.asyncSetParagraphs(MainActivity.this);
-            setStateOfStartButton();
+            fl = new FileLoader();
+            fl.start();
+//            Options.asyncSetParagraphs(MainActivity.this);
+//            setStateOfStartButton();
         }
     }
     @Override
@@ -185,18 +185,19 @@ public class MainActivity extends AppCompatActivity {
 
         public void run() {
 
-//            try {
-//                Thread.sleep(1000);
-//            }catch (Exception e)
-//            {
-//                Log.d(TAG,e.toString());
-//            }
-            Options.asyncSetParagraphs(MainActivity.this);
+            try {
+                Thread.sleep(100);
+            }catch (Exception e)
+            {
+                Log.d(TAG,e.toString());
+            }
+
             try {
                 MainActivity.this.runOnUiThread(
                         new Runnable() {
                             @Override
                             public void run() {
+                                Options.asyncSetParagraphs(MainActivity.this);
                                 setStateOfStartButton();
                             }
                         }

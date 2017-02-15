@@ -9,8 +9,13 @@ import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
+import android.speech.RecognitionListener;
+import android.speech.RecognizerIntent;
+import android.speech.SpeechRecognizer;
 import android.speech.tts.TextToSpeech;
 import android.support.v7.app.AppCompatActivity;
+import android.text.Spannable;
+import android.text.SpannableString;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
@@ -24,17 +29,16 @@ import android.widget.TextView;
 import java.lang.reflect.Field;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Random;
 import java.util.Vector;
 
 import io.realm.Realm;
 
 public class ReadActivity extends AppCompatActivity implements View.OnClickListener,
-        TextToSpeech.OnInitListener {
+        TextToSpeech.OnInitListener, RecognitionListener {
     LinearLayout llMain;
 
     // DEBUG
@@ -60,6 +64,9 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
     private TextToSpeech mTTS;
     private String textTS;
     private boolean TTSinited;
+    private SpeechRecognizer speech = null;
+    private Intent recognizerIntent;
+    private SpeechLine speechLine;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -101,6 +108,11 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
 
 //        mTTS = new TextToSpeech(this, this);
 
+        if(Options.getMode()==3)
+        {
+            // чтение вслух и распознавание
+            initSpeechRecognition();
+        }
     }
 
     @Override
@@ -136,7 +148,7 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
             public void execute(Realm realm) {
                 rec = realm.createObject(Record.class);
                 rec.setDate(new Date());
-                int numW = Util.CountWords(new String(textToRead));
+                int numW = Util.countWords(new String(textToRead));
                 rec.setLenTextInWords(numW);
                 int timeInSec = (int) (stopTime - startTime) / 1000;
                 rec.setTimeInSecs(timeInSec);
@@ -406,6 +418,8 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
         // вывести на экран по строке текст с указанной позиции сколько влезет
         // возвращает позицию
 
+        if(Options.getMode()==3)
+            speech.stopListening();
         int posBegPage=pos;
         llMain.removeAllViews();
 
@@ -429,7 +443,7 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
 
             String outText=skipVowels(text, pos, lenLine);
 
-            numWords[numLine] = Util.CountWords(text, pos, lenLine);
+            numWords[numLine] = Util.countWords(text, pos, lenLine);
 
             vt.setText(""+outText+(addHyphen[0]?"-":""));
             llMain.addView(vt);
@@ -465,6 +479,11 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
 
         startTimeOfPage = System.currentTimeMillis();
 
+        if(Options.getMode()==3) {
+            speech.startListening(recognizerIntent);
+            speechLine=new SpeechLine();
+        }
+
         return pos;
     }
 
@@ -483,6 +502,203 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
         Log.d(TAG, "After fade " + duration + " ms, words[" + shadowLine + "]=" + numWords[shadowLine]);
     }
 
+
+    private void initSpeechRecognition()
+    {
+        speech = SpeechRecognizer.createSpeechRecognizer(this);
+        speech.setRecognitionListener(this);
+        recognizerIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        recognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE,
+                "ru");
+        recognizerIntent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE,
+                this.getPackageName());
+        recognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                RecognizerIntent.LANGUAGE_MODEL_WEB_SEARCH);
+        recognizerIntent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 5);
+        recognizerIntent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true);
+//        recognizerIntent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS,10000);
+//        recognizerIntent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS,10000);
+    }
+
+    /**
+     * Called when the endpointer is ready for the user to start speaking.
+     *
+     * @param params parameters set by the recognition service. Reserved for future use.
+     */
+    @Override
+    public void onReadyForSpeech(Bundle params) {
+        Log.i(TAG, "onReadyForSpeech");
+
+    }
+
+    /**
+     * The user has started to speak.
+     */
+    @Override
+    public void onBeginningOfSpeech() {
+        Log.i(TAG, "onBeginningOfSpeech");
+    }
+
+    /**
+     * The sound level in the audio stream has changed. There is no guarantee that this method will
+     * be called.
+     *
+     * @param rmsdB the new RMS dB value
+     */
+    @Override
+    public void onRmsChanged(float rmsdB) {
+        Log.i(TAG, "onRmsChanged");
+    }
+
+    /**
+     * More sound has been received. The purpose of this function is to allow giving feedback to the
+     * user regarding the captured audio. There is no guarantee that this method will be called.
+     *
+     * @param buffer a buffer containing a sequence of big-endian 16-bit integers representing a
+     *               single channel audio stream. The sample rate is implementation dependent.
+     */
+    @Override
+    public void onBufferReceived(byte[] buffer) {
+        Log.i(TAG, "onBufferReceived: " + buffer);
+    }
+
+    /**
+     * Called after the user stops speaking.
+     */
+    @Override
+    public void onEndOfSpeech() {
+        Log.i(TAG, "onEndOfSpeech");
+    }
+
+    /**
+     * A network or recognition error occurred.
+     *
+     * @param errorCode code is defined in {@link SpeechRecognizer}
+     */
+    @Override
+    public void onError(int errorCode) {
+        String errorMessage = getErrorText(errorCode);
+        Log.d(TAG, "FAILED: " + errorMessage);
+    }
+
+    public static String getErrorText(int errorCode) {
+        String message;
+        switch (errorCode) {
+            case SpeechRecognizer.ERROR_AUDIO:
+                message = "Audio recording error";
+                break;
+            case SpeechRecognizer.ERROR_CLIENT:
+                message = "Client side error";
+                break;
+            case SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS:
+                message = "Insufficient permissions";
+                break;
+            case SpeechRecognizer.ERROR_NETWORK:
+                message = "Network error";
+                break;
+            case SpeechRecognizer.ERROR_NETWORK_TIMEOUT:
+                message = "Network timeout";
+                break;
+            case SpeechRecognizer.ERROR_NO_MATCH:
+                message = "No match";
+                break;
+            case SpeechRecognizer.ERROR_RECOGNIZER_BUSY:
+                message = "RecognitionService busy";
+                break;
+            case SpeechRecognizer.ERROR_SERVER:
+                message = "error from server";
+                break;
+            case SpeechRecognizer.ERROR_SPEECH_TIMEOUT:
+                message = "No speech input";
+                break;
+            default:
+                message = "Didn't understand, please try again.";
+                break;
+        }
+        return message;
+    }
+
+    /**
+     * Called when recognition results are ready.
+     *
+     * @param results the recognition results. To retrieve the results in {@code
+     *                ArrayList<String>} format use {@link Bundle#getStringArrayList(String)} with
+     *                {@link SpeechRecognizer#RESULTS_RECOGNITION} as a parameter. A float array of
+     *                confidence values might also be given in {@link SpeechRecognizer#CONFIDENCE_SCORES}.
+     */
+    @Override
+    public void onResults(Bundle results) {
+        Log.i(TAG, "onResults");
+        ArrayList<String> matches = results
+                .getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+        String text = "";
+        for (String result : matches)
+            text += result + "\n";
+
+        TextView tv=(TextView)llMain.getChildAt(speechLine);
+        //SpannableString lineText=tv.;
+//        returnedText.setText(text);
+    }
+
+    /**
+     * Called when partial recognition results are available. The callback might be called at any
+     * time between {@link #onBeginningOfSpeech()} and {@link #onResults(Bundle)} when partial
+     * results are ready. This method may be called zero, one or multiple times for each call to
+     * {@link SpeechRecognizer#startListening(Intent)}, depending on the speech recognition
+     * service implementation.  To request partial results, use
+     * {@link RecognizerIntent#EXTRA_PARTIAL_RESULTS}
+     *
+     * @param partialResults the returned results. To retrieve the results in
+     *                       ArrayList&lt;String&gt; format use {@link Bundle#getStringArrayList(String)} with
+     *                       {@link SpeechRecognizer#RESULTS_RECOGNITION} as a parameter
+     */
+    @Override
+    public void onPartialResults(Bundle partialResults) {
+        Log.i(TAG, "onPartialResults");
+        ArrayList<String> matches = partialResults
+                .getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+        for (String result : matches) {
+            Log.i(TAG, result + "\n");
+        }
+
+    }
+
+    /**
+     * Reserved for adding future events.
+     *
+     * @param eventType the type of the occurred event
+     * @param params    a Bundle containing the passed parameters
+     */
+    @Override
+    public void onEvent(int eventType, Bundle params) {
+
+    }
+
+    private class SpeechLine
+    {
+        public int numLine;
+        public String[] words;
+        public String line;
+        public int curWord;
+        public boolean[] recognized;
+
+        public SpeechLine(String _line)
+        {
+            this.line=_line.trim();
+            if(line.length()>0) {
+                words = line.split("[ ,.!?;\\-:\"\t\n\r]+");
+                recognized = new boolean[words.length];
+                curWord = 0;
+            }
+        }
+
+        public Spannable getSpannedText()
+        {
+            Spannable s=new SpannableString(line);
+            return s;
+        }
+    }
+
     private class Updater extends Thread {
         public boolean stopped = false;
         private boolean isShadowed = false;
@@ -494,23 +710,23 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
                 while (!stopped) {
                     int duration = numWords[shadowLine] * durationForWordMS;
                     try {
-                        Log.d(TAG, "Sleep Before [" + id + "]=" + duration + " ms, words[" + shadowLine + "]=" + numWords[shadowLine]);
+//                        Log.d(TAG, "Sleep Before [" + id + "]=" + duration + " ms, words[" + shadowLine + "]=" + numWords[shadowLine]);
                         Thread.sleep(duration);
-                        Log.d(TAG, "Sleep After [" + id + "]=" + duration + " ms, words[" + shadowLine + "]=" + numWords[shadowLine]);
+//                        Log.d(TAG, "Sleep After [" + id + "]=" + duration + " ms, words[" + shadowLine + "]=" + numWords[shadowLine]);
                     } catch (Exception e) {
                         Log.i("Read" + id, e.toString());
                     }
                     if (stopped)
                         break;
                     // Активность списка
-                    Log.d("Read" + id, "Shadow1");
+//                    Log.d("Read" + id, "Shadow1");
                     isShadowed = false;
                     ReadActivity.this.runOnUiThread(
                             new Runnable() {
                                 @Override
                                 public void run() {
                                     if (!stopped) {
-                                        Log.d("Read" + id, "Shadow2 [" + shadowLine + "]");
+//                                        Log.d("Read" + id, "Shadow2 [" + shadowLine + "]");
                                         try {
                                             TextView v = (TextView) ((ViewGroup) ReadActivity.this.llMain).getChildAt(shadowLine);
                                             //v.setTextColor(ReadActivity.getBackgroundColor(v));
@@ -523,7 +739,7 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
                                                 nextPage(v);
                                             }
                                         } catch (Exception e) {
-                                            Log.e("Read" + id, e.toString());
+                                            Log.e(TAG + id, e.toString());
                                         }
                                     }
                                 }

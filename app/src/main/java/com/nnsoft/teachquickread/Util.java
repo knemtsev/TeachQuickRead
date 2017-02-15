@@ -1,31 +1,34 @@
 package com.nnsoft.teachquickread;
 
+import android.util.Log;
+
 import java.util.Random;
 import java.util.zip.CRC32;
 
 import io.realm.Realm;
-import io.realm.RealmResults;
 
 /**
  * Created by knemt on 24.01.2017.
  */
 
 public class Util {
-    public static int CountWords(char[] text, int pos, int len)
+    private static final String TAG="Util";
+
+    public static int countWords(char[] text, int pos, int len)
     {
-        return CountWords(new String(text,pos,len));
+        return countWords(new String(text,pos,len));
     }
 
-    public static int CountWords(String line) {
+    public static int countWords(String line) {
         String[] words = line.split("[ ,.!?;\\-:\"\t\r\n]+");
         return words.length;
     }
 
-    public static char[] GetRandomText(String[] pars, int words) {
+    public static char[] getRandomText(String[] pars, int words) {
         if (pars != null) {
             int[] lens = new int[pars.length];
             for (int i = 0; i < pars.length; i++) {
-                lens[i] = CountWords(pars[i]);
+                lens[i] = countWords(pars[i]);
             }
 
             Random rnd = new Random(System.currentTimeMillis());
@@ -81,6 +84,26 @@ public class Util {
                 sb.insert(0,p.getText()+"\n");
             }
 
+            if(lenW>(words*1.25))
+            {
+                Log.d(TAG,"lenW="+lenW+" words="+words);
+                // пытаемся укоротить
+                String[] ss=sb.toString().split("(?<=[.!?])\\s");
+                if(ss.length>1)
+                {
+                    int lenW2=0;
+                    StringBuilder sb2=new StringBuilder();
+                    for(int i=0; i<ss.length; i++)
+                    {
+                        sb2.append(ss[i]+" ");
+                        lenW2+=countWords(ss[i]);
+                        if(lenW2>words)
+                            break;
+                    }
+                    sb=sb2;
+                    Log.d(TAG,"lenW2="+lenW2);
+                }
+            }
         }
         return sb.toString().toCharArray();
     }

@@ -13,15 +13,12 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Stack;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-
-import io.realm.Realm;
 
 /**
  * Created by Nicholas Nemtsev on 24.01.2017.
@@ -36,13 +33,11 @@ public class FB2 {
     String[] paragraphs = null;
     static String TAG = "FB2";
     private Cache cache;
-    private Realm realm;
     private int numParagraphs=0;
 
-    public FB2(String filePath, Activity act, Cache cache, Realm realm) {
+    public FB2(String filePath, Activity act, Cache cache) {
 
         this.cache=cache;
-        this.realm=realm;
         this.filePath = filePath;
         try {
             if(filePath.startsWith("/")) {
@@ -163,7 +158,7 @@ public class FB2 {
     private static String TAG_STRONG="strong";
 
     private void readTextXML(InputStream is, String encoding) {
-        int numPar=0;
+        numParagraphs=0;
 
         try {
             XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
@@ -196,9 +191,9 @@ public class FB2 {
                             if(tag.equals(TAG_P) && !tagStack.empty() && tagStack.peek().equals(TAG_SECTION) && paragraph!=null)
                             {
                                 String parS=paragraph.toString();
-                                cache.putParagraph(numPar,parS,realm);
+                                cache.putParagraph(numParagraphs,parS);
                                 Log.d(TAG, "END_TAG: p = [" + parS +"]");
-                                numPar++;
+                                numParagraphs++;
                                 paragraph=null;
                             }
                         }
@@ -225,8 +220,6 @@ public class FB2 {
                 // следующий элемент
                 xpp.next();
             }
-            numParagraphs=numPar;
-
         } catch (Exception ex)
         {
             Log.e(TAG,ex.toString());

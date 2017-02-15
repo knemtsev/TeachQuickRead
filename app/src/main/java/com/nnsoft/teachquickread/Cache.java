@@ -13,24 +13,24 @@ import io.realm.RealmResults;
 public class Cache {
     Activity mainActivity;
     private CachedFile cachedFile;
+    Realm realm;
 
     public Cache(Activity _mainActivity)
     {
         mainActivity=_mainActivity;
+        realm=Realm.getDefaultInstance();
     }
 
     public CachedFile getFile(String fileName)
     {
-        Realm realm;
-        realm=Realm.getDefaultInstance();
         cachedFile=realm.where(CachedFile.class).equalTo("fileName", fileName).findFirst();
         if(cachedFile==null){
             try {
                 realm.beginTransaction();
-                FB2 fb2 = new FB2(fileName, mainActivity, this, realm);
                 cachedFile = realm.createObject(CachedFile.class);
-                //cachedFile=new CachedFile();
                 cachedFile.setFileName(fileName);
+                FB2 fb2 = new FB2(fileName, mainActivity, this);
+                //cachedFile=new CachedFile();
                 cachedFile.setNumberOfParagraphs(fb2.getNumParagraphs());
                 realm.commitTransaction();
             }catch (Exception ex)
@@ -41,12 +41,12 @@ public class Cache {
         return cachedFile;
     }
 
-    public void putParagraph(int num, String text, Realm realm)
+    public void putParagraph(int num, String text)
     {
         Paragraph p=realm.createObject(Paragraph.class);
         p.setId(num);
         p.setText(text);
-        p.setNumWords(Util.CountWords(text));
+        p.setNumWords(Util.countWords(text));
         cachedFile.getParList().add(p);
     }
 

@@ -31,6 +31,8 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Locale;
 import java.util.Random;
 import java.util.Vector;
@@ -66,7 +68,7 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
     private boolean TTSinited;
     private SpeechRecognizer speech = null;
     private Intent recognizerIntent;
-    private SpeechLine speechLine;
+    private SpeechText speechText; // текст экрана, который надо прослушать, распознать и подчеркнуть
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -108,7 +110,7 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
 
 //        mTTS = new TextToSpeech(this, this);
 
-        if(Options.getMode()==3)
+        if(isVoiceMode())
         {
             // чтение вслух и распознавание
             initSpeechRecognition();
@@ -133,13 +135,17 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
         if (u != null) u.stopped = true;
     }
 
+    boolean isSimpleMode()   {        return Options.getMode()==1;    }
+    boolean isSpeedMode()    {        return Options.getMode()==2;    }
+    boolean isVoiceMode()    {        return Options.getMode()==3;    }
+
     void startReading() {
         startTime = System.currentTimeMillis();
     }
 
     void stopReading() {
         stopTime = System.currentTimeMillis();
-        if (Options.getMode() == 2) u.stopped = true;
+        if (isSpeedMode()) u.stopped = true;
 
         // вычисляем и записываем в таблицу рекордов
         Realm realm = Realm.getDefaultInstance();
@@ -196,7 +202,7 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
         super.onResume();
 
 //        TTSinited=false;
-//        if (Options.getMode() == 2) {
+//        if (isSpeedNode()) {
 //            mTTS.speak("Поехали", TextToSpeech.QUEUE_FLUSH, null);
 //            TextView tv=new TextView(this);
 //            tv.setText("ждём игициализации Text To Speech");
@@ -265,11 +271,12 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private boolean isBlank(char c) {
-        return (c == ' ') || (c == '\r') || (c == '\n') || (c == '\t') || (c == ' ');
+//        return (c == ' ') || (c == '\r') || (c == '\n') || (c == '\t') || (c == ' ');
+        return " \r\n\t ".indexOf(c)>-1;
     }
 
     private boolean isPunct(char c) {
-        return (c == ',') || (c == '.') || (c == ':') || (c == ';') || (c == '-') || (c == '?') || (c == '!') || (c == '"');
+        return "',.:;-?!\"".indexOf(c)>-1;
     }
 
     private boolean isEol(char[] text, int pos) {
@@ -298,7 +305,7 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
 
     String skipVowels(char[] text, int pos, int lenLine) {
         String res = "";
-        if (Options.isSkipVowels()) {
+        if (Options.isSkipVowels() && isSimpleMode() && isSpeedMode()) {
             StringBuilder sb = new StringBuilder();
             int endPos = pos + lenLine;
             Random rnd = new Random(System.currentTimeMillis());
@@ -417,8 +424,9 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
     private int showText(char[] text, int pos) {
         // вывести на экран по строке текст с указанной позиции сколько влезет
         // возвращает позицию
+        List<Integer> listBegLine=new LinkedList<Integer>();
 
-        if(Options.getMode()==3)
+        if(isVoiceMode())
             speech.stopListening();
         int posBegPage=pos;
         llMain.removeAllViews();
@@ -439,12 +447,14 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
             int lenLine = p.breakText(text, pos, Math.min(text.length - pos, maxLenLine), widthPx, null);
 
             boolean[] addHyphen=new boolean[1];
+
             lenLine=getLenLine(text, pos, lenLine, addHyphen);
 
             String outText=skipVowels(text, pos, lenLine);
 
             numWords[numLine] = Util.countWords(text, pos, lenLine);
 
+            listBegLine.add(pos-posBegPage);
             vt.setText(""+outText+(addHyphen[0]?"-":""));
             llMain.addView(vt);
 
@@ -469,7 +479,7 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
             llMain.addView(btn);
         }
 
-        if (Options.getMode() == 2) {
+        if (isSpeedMode()) {
             shadowLine = 0;
             if (u != null) u.stopped = true;
             u = new Updater();
@@ -479,9 +489,10 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
 
         startTimeOfPage = System.currentTimeMillis();
 
-        if(Options.getMode()==3) {
+        if(isVoiceMode()) {
+            speechText=new SpeechText(new String(text,posBegPage,pos-posBegPage),
+                    listBegLine.toArray(new Integer[listBegLine.size()]));
             speech.startListening(recognizerIntent);
-            speechLine=new SpeechLine();
         }
 
         return pos;
@@ -635,7 +646,7 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
         for (String result : matches)
             text += result + "\n";
 
-        TextView tv=(TextView)llMain.getChildAt(speechLine);
+        //TextView tv=(TextView)llMain.getChildAt(speechLine);
         //SpannableString lineText=tv.;
 //        returnedText.setText(text);
     }
@@ -674,17 +685,20 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
 
     }
 
-    private class SpeechLine
+    private class SpeechText
     {
-        public int numLine;
         public String[] words;
         public String line;
         public int curWord;
         public boolean[] recognized;
+        private Integer[] posBegLine;
 
-        public SpeechLine(String _line)
+        public SpeechText(String _line, Integer[] _posBegLine)
         {
+            // _line - весь текст, который выведен на экран
+            // posBegLine[] - массив позиций от начала текста начала строк
             this.line=_line.trim();
+            this.posBegLine=_posBegLine;
             if(line.length()>0) {
                 words = line.split("[ ,.!?;\\-:\"\t\n\r]+");
                 recognized = new boolean[words.length];
@@ -692,10 +706,32 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
             }
         }
 
+
+        public void markRecogized(ArrayList<String> matches)
+        {
+            String[] spokenWords=matches.get(0).split(" ");
+            int numFirstNotRecogn=0;
+            for(; numFirstNotRecogn<recognized.length; numFirstNotRecogn++)
+                if(!recognized[numFirstNotRecogn])
+                    break;
+            int numSpoken=0;
+
+        }
+
         public Spannable getSpannedText()
         {
             Spannable s=new SpannableString(line);
             return s;
+        }
+
+        public int getCurrentLineNumber()
+        {
+
+        }
+
+        public Spannable getCurrentLine()
+        {
+
         }
     }
 

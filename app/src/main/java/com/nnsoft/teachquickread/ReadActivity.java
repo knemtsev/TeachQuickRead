@@ -13,6 +13,7 @@ import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.speech.tts.TextToSpeech;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Spannable;
 import android.text.SpannableString;
@@ -76,7 +77,8 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
 
         this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         //requestWindowFeature(Window.FEATURE_NO_TITLE);
-        getSupportActionBar().hide();
+        ActionBar ab=getSupportActionBar();
+        if(ab!=null) ab.hide();
 
         setContentView(R.layout.activity_read);
 
@@ -236,8 +238,6 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
             if (result == TextToSpeech.LANG_MISSING_DATA
                     || result == TextToSpeech.LANG_NOT_SUPPORTED) {
                 Log.e("TTS", "Извините, этот язык не поддерживается");
-            } else {
-                ;//mButton.setEnabled(true);
             }
 
         } else {
@@ -714,8 +714,15 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
             for(; numFirstNotRecogn<recognized.length; numFirstNotRecogn++)
                 if(!recognized[numFirstNotRecogn])
                     break;
-            int numSpoken=0;
+            int numLastRecogn=words.length-1;
+            for(;numLastRecogn>=0; numLastRecogn--)
+                if(recognized[numLastRecogn])
+                    break;
+            if(numLastRecogn<words.length-1)
+            {
 
+            }
+            int numSpoken=0;
         }
 
         public Spannable getSpannedText()
